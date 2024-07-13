@@ -2,13 +2,13 @@
     "chain_name": "lava",
     "api": [
         {
-            "address": "https://lava-mainnet-rest.mellifera.network", 
+            "address": "https://lava-mainnet-rest.mellifera.network",
             "provider": "MELLIFERA"
         }
     ], 
     "rpc": [
         {
-            "address": "https://lava-mainnet-rpc.mellifera.network", 
+            "address": "https://lava-mainnet-rpc.mellifera.network",
             "provider": "MELLIFERA"
         }
     ],
@@ -22,5 +22,10 @@
     }],
     "addr_prefix": "lava@",
     "theme_color": "#ce4747",
-    "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75"
+    "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75",
+    "lava_specs_meta": {
+        "LAVA": {
+            "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75"
+        }
+    }
 }

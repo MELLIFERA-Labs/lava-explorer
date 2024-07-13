@@ -12,7 +12,6 @@ import { onMounted, ref } from 'vue';
 import { Icon } from '@iconify/vue';
 import type { Key, SlashingParam, Validator } from '@/types';
 import { formatSeconds}  from '@/libs/utils'
-import { diff } from 'semver';
 
 const staking = useStakingStore();
 const base = useBaseStore();

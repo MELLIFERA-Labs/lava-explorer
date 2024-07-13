@@ -60,7 +60,7 @@ const handleLangChange = (lang: string) => {
                     class="hover:bg-gray-100 dark:hover:bg-[#373f59]"
                     :class="{ 'text-primary': currentLang === lang.i18nLang }"
                     @click="handleLangChange(lang.i18nLang)"
-                    >{{ lang.label }}</a
+                    >{{ lang.label }} test</a
                 >
             </li>
         </ul>
