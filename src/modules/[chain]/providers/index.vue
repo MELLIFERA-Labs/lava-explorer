@@ -69,7 +69,7 @@ onMounted(() => {
   {
     meta: {
       i18n: 'providers',
-      order: 5
+      order: 2
     }
   }
 </route>

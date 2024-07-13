@@ -16,6 +16,13 @@
         rel="noopener noreferrer"
         >Ping.pub</a
       >
+      modifed by for LAVA by <a
+        class="link link-primary no-underline"
+        href="https://mellifera.network"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="color: #ffea00;"
+        > &nbsp; MELLIFERA</a>
     </div>
     <div
       class="hidden md:!block"

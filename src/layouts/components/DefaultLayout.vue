@@ -92,7 +92,13 @@ dayjs()
           <Icon icon="mdi-close" class="text-2xl" />
         </div>
       </div>
-      <div
+      <div class="flex justify-between mt-1 pl-4 py-4">
+        <h1><a class="link link-primary no-underline"
+               target="_blank"
+               rel="noopener noreferrer"
+               style="color: #ffea00;" href="https://mellifera.network">MELLIFERA</a></h1>
+      </div>
+       <div
         v-for="(item, index) of blockchain.computedChainMenu"
         :key="index"
         class="px-2"
