@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useLavaProvidersStore } from '@/stores/useProvidersStore';
 import { Icon } from '@iconify/vue';
 import { computed } from '@vue/reactivity';
@@ -27,12 +27,16 @@ const loadAvatar = (identity: string) => {
 };
 
 const loadAvatars = () => {
+  console.log('loadAvatars')
+  console.log('a-->', activeProviders)
   // fetches all avatars from keybase and stores it in localStorage
   const promises = activeProviders.value.map((provider: any) => {
+    console.log('here', provider)
     const identity = provider.description?.identity;
 
     // Here we also check whether we haven't already fetched the avatar
     if (identity && !avatars.value[identity]) {
+      console.log('fetching avatar for', identity);
       return fetchAvatar(identity);
     } else {
       return Promise.resolve();
@@ -46,6 +50,7 @@ const loadAvatars = () => {
 
 onMounted(() => {
   lavaProvidersStore.getActiveProviders(chainId).then((p) => {
+    console.log(p)
     activeProviders.value = p;
   });
   lavaProvidersStore.getFrozenProviders(chainId).then((p) => {
@@ -105,7 +110,11 @@ const underDevelopmentAlert = () => {
   alert('Under development!');
 };
 
-loadAvatars();
+watch(activeProviders, (newValue: any) => {
+  if (newValue.length > 0) {
+    loadAvatars();
+  }
+});
 </script>
 <template>
   <div>
