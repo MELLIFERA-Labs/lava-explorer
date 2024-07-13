@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useLavaProvidersStore } from '@/stores/useProvidersStore';
 import { Icon } from '@iconify/vue';
 import { computed } from '@vue/reactivity';
@@ -105,7 +105,11 @@ const underDevelopmentAlert = () => {
   alert('Under development!');
 };
 
-loadAvatars();
+watch(activeProviders, (newValue: any) => {
+  if (newValue.length > 0) {
+    loadAvatars();
+  }
+});
 </script>
 <template>
   <div>
