@@ -97,7 +97,7 @@ const logo = (identity?: string) => {
 const list = computed(() => {
   if (tab.value === 'active') {
     return activeProviders.value.map((x: any) => {
-      x.logo = logo(x.description.identity);
+      x.logo = logo(x?.description?.identity);
       return x;
     });
   }
