@@ -10,7 +10,7 @@ onMounted(() => {
 
 <template>
   <div>
-    <RouterView />
+    <RouterView  :key="$route.path"/>
     <TxDialog />
   </div>
 </template>

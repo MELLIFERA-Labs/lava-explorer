@@ -46,6 +46,13 @@ export const useLavaProvidersStore = defineStore('providersStore', {
         const [prividerWithTotalStake] = addTotalStakeAndJailed([provider]);
         return prividerWithTotalStake;
     },
+    async getProviderChains(address: string) {
+        console.log(address)
+        const providersResponse = await this.blockchain.rpc?.getProviderChains(address);
+        console.log('----->', providersResponse)
+        const prividerWithTotalStake = addTotalStakeAndJailed(providersResponse.stakeEntries);
+        return prividerWithTotalStake;
+    },
     async getActiveProviders(chainName: string) {
       const latestBlock = await this.blockchain.rpc?.getBaseBlockLatest();
       const latestHeight = latestBlock.block.header.height;
