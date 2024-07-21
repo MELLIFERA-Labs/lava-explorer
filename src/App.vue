@@ -10,6 +10,7 @@ onMounted(() => {
 
 <template>
   <div>
+   <!--    Add ability to reuse component provider profile, but broke validator images  -->
     <RouterView  :key="$route.path"/>
     <TxDialog />
   </div>
