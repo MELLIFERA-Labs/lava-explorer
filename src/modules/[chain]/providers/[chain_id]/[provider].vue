@@ -12,7 +12,7 @@ const identity = ref('');
 const p = ref({} as any);
 const cache = JSON.parse(localStorage.getItem('providers-avatars') || '{}');
 const avatars = ref(cache || {});
-const providerOtherChains = ref([{}]);
+const providerOtherChains = ref([] as any[]);
 let showCopyToast = ref(0);
 const format = useFormatter();
 const staking = useStakingStore();
@@ -357,7 +357,7 @@ onMounted(() => {
               </td>
               <td class="text-caption text-primary py-3">
                 <RouterLink :to="`/${chain}/providers/${p.chain}`">{{
-                  p.chain
+                  p?.chain
                 }}</RouterLink>
               </td>
               <td class="py-3">
