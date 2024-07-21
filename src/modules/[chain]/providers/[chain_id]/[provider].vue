@@ -19,7 +19,7 @@ const staking = useStakingStore();
 const lavaProvidersStore = useLavaProvidersStore();
 import { useRoute } from 'vue-router';
 const route = useRoute();
-const copyWebsite = async (url: string ) => {
+const copyWebsite = async (url: string) => {
   if (!url) {
     return;
   }
@@ -36,6 +36,18 @@ const copyWebsite = async (url: string ) => {
     }, 1000);
   }
 };
+function statusClass(status: string) {
+  switch (status) {
+    case 'jailed':
+      return 'text-error';
+    case 'frozen':
+      return 'text-warning';
+    case 'active':
+      return 'text-success';
+    default:
+      return '';
+  }
+}
 const fetchAvatar = (identity: string) => {
   // fetch avatar from keybase
   return new Promise<void>((resolve) => {
@@ -87,16 +99,19 @@ onMounted(() => {
         if (identity.value && !avatars.value[identity.value])
           loadAvatar(identity.value);
       });
-    lavaProvidersStore.getProviderChains(provider)
-      .then((res) => {
-        console.log('other', res)
-        providerOtherChains.value = res;
-      });
+    lavaProvidersStore.getProviderChains(provider).then((res) => {
+      providerOtherChains.value = res;
+    });
   }
 });
 </script>
 <template>
   <div>
+    <div
+        class="bg-base-100 rounded-lg grid sm:grid-cols-1 md:grid-cols-4 p-4 mb-1"
+    >
+      <span>Chain ID: {{props.chain_id}}</span>
+    </div>
     <div class="bg-base-100 px-4 pt-3 pb-4 rounded shadow border-indigo-500">
       <div class="flex flex-col lg:!flex-row pt-2 pb-1">
         <div class="flex-1">
@@ -171,7 +186,7 @@ onMounted(() => {
               {{ $t('staking.validator_status') }}
             </p>
             <div class="card-list">
-              <div class="flex items-center">
+              <div class="flex items-center mb-2">
                 <Icon icon="mdi-shield-alert-outline" class="text-xl mr-1" />
                 <span class="font-bold mr-2">{{ $t('staking.jailed') }}: </span>
                 <span :class="p.jailed === true ? 'text-error' : ''">
@@ -179,6 +194,15 @@ onMounted(() => {
                     p.jailed === true
                       ? dayjs.unix(p.jail_end_time).fromNow()
                       : '-'
+                  }}
+                </span>
+              </div>
+              <div class="flex items-center">
+                <Icon icon="mdi-information-outline" class="text-xl mr-1" />
+                <span class="font-bold mr-2">Status: </span>
+                <span :class="statusClass(p.status)">
+                  {{
+                    p?.status?.toUpperCase()
                   }}
                 </span>
               </div>
@@ -310,7 +334,7 @@ onMounted(() => {
     </div>
     <div class="mt-3 bg-base-100 px-4 pt-3 pb-4 rounded mb-4 shadow">
       <div class="flex justify-between">
-        <h2 class="card-title mb-4">Other provider chains</h2>
+        <h2 class="card-title mb-4">Provider chains</h2>
       </div>
       <div class="overflow-x-auto">
         <table class="table w-full text-sm table-zebra">
@@ -327,18 +351,39 @@ onMounted(() => {
           <tbody class="text-sm">
             <tr v-for="(p, index) in providerOtherChains" :key="index">
               <td class="text-caption text-primary py-3">
-                <RouterLink  :to="`/${chain}/providers/${p.chain}/${p.address}`">{{p?.moniker ?? p?.description?.moniker ?? p?.address}} </RouterLink>
+                <RouterLink :to="`/${chain}/providers/${p.chain}/${p.address}`"
+                  >{{ p?.moniker ?? p?.description?.moniker ?? p?.address }}
+                </RouterLink>
               </td>
               <td class="text-caption text-primary py-3">
-                <RouterLink :to="`/${chain}/providers/${p.chain}`">{{p.chain}}</RouterLink>
+                <RouterLink :to="`/${chain}/providers/${p.chain}`">{{
+                  p.chain
+                }}</RouterLink>
               </td>
-              <td class="py-3">t2</td>
-              <td class="py-3">t2</td>
-              <td class="py-3">t2</td>
+              <td class="py-3">
+                {{
+                  format.formatToken(
+                    {
+                      amount: parseInt(p.total_stake).toString(),
+                      denom: staking.params.bond_denom,
+                    },
+                    true,
+                    '0,0'
+                  )
+                }}
+              </td>
+              <td class="py-3">{{ p.delegate_commission }}%</td>
+              <td class="py-3" :class="statusClass(p?.status)">
+                {{ p?.status?.toUpperCase() }}
+              </td>
               <td class="py-3">
                 <div v-if="true" class="flex">
-                  <label for="delegate" class="btn btn-primary btn-xs mr-2">restake</label>
-                  <label for="redelegate" class="btn btn-primary btn-xs mr-2">redelagate</label>
+                  <label for="delegate" class="btn btn-primary btn-xs mr-2"
+                    >restake</label
+                  >
+                  <label for="redelegate" class="btn btn-primary btn-xs mr-2"
+                    >redelagate</label
+                  >
                 </div>
               </td>
             </tr>

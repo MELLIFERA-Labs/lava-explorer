@@ -1,12 +1,22 @@
 import { defineStore } from 'pinia';
 import { useBlockchain } from '@/stores/useBlockchain';
 import bignumber from 'bignumber.js';
-import dayjs from "dayjs";
+import dayjs from 'dayjs';
 function isJailed(jailedEndTimeUnix?: number) {
   if (!jailedEndTimeUnix) return false;
   const timestampTime = dayjs.unix(jailedEndTimeUnix);
   return timestampTime.isAfter(dayjs());
 }
+function getProviderStatus(latestHeight: number, provider: any) {
+  if (isJailed(provider.jail_end_time)) {
+    return 'jailed';
+  }
+  if (Number(provider.stake_applied_block) > Number(latestHeight)) {
+    return 'frozen';
+  }
+  return 'active';
+}
+
 function addTotalStakeAndJailed(providers: any[]) {
   return providers.map((provider: any) => {
     const totalStake = bignumber(provider.delegate_total.amount)
@@ -24,6 +34,7 @@ export const useLavaProvidersStore = defineStore('providersStore', {
       frozenProviders: [] as any[],
       jailedProviders: [] as any[],
       activeProviders: [] as any[],
+      latestHeight: 0,
     };
   },
   getters: {
@@ -35,23 +46,37 @@ export const useLavaProvidersStore = defineStore('providersStore', {
     getAllProviders(chainName: string) {
       return this.blockchain.rpc?.getLavaProviders(chainName, true);
     },
-    async getProviderByAddress(address: string, chainName: string,) {
-        const providersResponse = await this.getAllProviders(chainName);
-        const provider = providersResponse.stakeEntry.find(
-            (provider: { address: string }) => provider.address === address
-        );
-        if (!provider) {
-            return null;
-        }
-        const [prividerWithTotalStake] = addTotalStakeAndJailed([provider]);
-        return prividerWithTotalStake;
+    async getProviderByAddress(address: string, chainName: string) {
+      const latestBlock = await this.blockchain.rpc?.getBaseBlockLatest();
+      this.latestHeight = Number(latestBlock.block.header.height);
+      const providersResponse = await this.getAllProviders(chainName);
+      const provider = providersResponse.stakeEntry.find(
+        (provider: { address: string }) => provider.address === address
+      );
+      if (!provider) {
+        return null;
+      }
+      const [providerWithTotalStake] = addTotalStakeAndJailed([provider]);
+      providerWithTotalStake.status = getProviderStatus(
+        this.latestHeight,
+        providerWithTotalStake
+      );
+      return providerWithTotalStake;
     },
     async getProviderChains(address: string) {
-        console.log(address)
-        const providersResponse = await this.blockchain.rpc?.getProviderChains(address);
-        console.log('----->', providersResponse)
-        const prividerWithTotalStake = addTotalStakeAndJailed(providersResponse.stakeEntries);
-        return prividerWithTotalStake;
+      const providersResponse = await this.blockchain.rpc?.getProviderChains(
+        address
+      );
+      const prividerWithTotalStake = addTotalStakeAndJailed(
+        providersResponse.stakeEntries
+      );
+      return prividerWithTotalStake.map((provider: any) => {
+        provider.status = getProviderStatus(
+          this.latestHeight,
+          provider
+        );
+        return provider;
+      });
     },
     async getActiveProviders(chainName: string) {
       const latestBlock = await this.blockchain.rpc?.getBaseBlockLatest();
@@ -63,15 +88,17 @@ export const useLavaProvidersStore = defineStore('providersStore', {
         (provider: { stake_applied_block: string }) =>
           Number(provider.stake_applied_block) <= Number(latestHeight)
       );
-      const activeProvidersWithTotalStake = addTotalStakeAndJailed(activeProviders);
-      const sortedByTotalStake = activeProvidersWithTotalStake.sort(
-        (a: any, b: any) => {
+      const activeProvidersWithTotalStake =
+        addTotalStakeAndJailed(activeProviders);
+      const sortedByTotalStake = activeProvidersWithTotalStake
+        .sort((a: any, b: any) => {
           return bignumber(b.total_stake).minus(a.total_stake).toNumber();
-        }
-      ).map((provider: any, index: number) => {
-        provider.rank = index + 1;
-        return provider;
-      }).filter((provider: any) => !provider.jailed);
+        })
+        .map((provider: any, index: number) => {
+          provider.rank = index + 1;
+          return provider;
+        })
+        .filter((provider: any) => !provider.jailed);
       return sortedByTotalStake;
     },
     async getFrozenProviders(chainName: string) {
@@ -82,19 +109,25 @@ export const useLavaProvidersStore = defineStore('providersStore', {
         (provider: { stake_applied_block: string }) =>
           Number(provider.stake_applied_block) > Number(latestHeight)
       );
-      const frozenProvidersWithTotalStake = addTotalStakeAndJailed(frozenProviders).map(p => {
-        p.rank = 0;
-        return p;
-      }).filter((provider: any) => !provider.jailed)
+      const frozenProvidersWithTotalStake = addTotalStakeAndJailed(
+        frozenProviders
+      )
+        .map((p) => {
+          p.rank = 0;
+          return p;
+        })
+        .filter((provider: any) => !provider.jailed);
       return frozenProvidersWithTotalStake;
     },
     async getJailedProviders(chainName: string) {
-        const providersResponse = await this.getAllProviders(chainName);
-        const providersWithData = addTotalStakeAndJailed(providersResponse.stakeEntry);
-        const jailedProviders = providersWithData.filter(
-            (provider: any) => provider.jailed === true
-        );
-        return jailedProviders;
-    }
+      const providersResponse = await this.getAllProviders(chainName);
+      const providersWithData = addTotalStakeAndJailed(
+        providersResponse.stakeEntry
+      );
+      const jailedProviders = providersWithData.filter(
+        (provider: any) => provider.jailed === true
+      );
+      return jailedProviders;
+    },
   },
 });

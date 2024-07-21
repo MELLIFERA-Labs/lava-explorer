@@ -16,6 +16,7 @@ export const useLavaSpecStore = defineStore('specStore', {
         return {
             specs: [] as any[],
             enabledSpecs: [] as any[],
+            supportedChains: [] as any[],
         }
     },
     getters: {
