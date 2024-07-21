@@ -2,11 +2,13 @@ import { defineStore } from 'pinia';
 import { useBlockchain } from '@/stores/useBlockchain';
 import bignumber from 'bignumber.js';
 import dayjs from 'dayjs';
+
 function isJailed(jailedEndTimeUnix?: number) {
   if (!jailedEndTimeUnix) return false;
   const timestampTime = dayjs.unix(jailedEndTimeUnix);
   return timestampTime.isAfter(dayjs());
 }
+
 function getProviderStatus(latestHeight: number, provider: any) {
   if (isJailed(provider.jail_end_time)) {
     return 'jailed';
@@ -43,12 +45,20 @@ export const useLavaProvidersStore = defineStore('providersStore', {
     },
   },
   actions: {
+    async fetchLatestHeight() {
+      const latestBlock = await this.blockchain.rpc?.getBaseBlockLatest();
+      this.latestHeight = Number(latestBlock.block.header.height);
+    },
+    async ensureLatestHeight() {
+      if (this.latestHeight === 0) {
+        await this.fetchLatestHeight();
+      }
+    },
     getAllProviders(chainName: string) {
       return this.blockchain.rpc?.getLavaProviders(chainName, true);
     },
     async getProviderByAddress(address: string, chainName: string) {
-      const latestBlock = await this.blockchain.rpc?.getBaseBlockLatest();
-      this.latestHeight = Number(latestBlock.block.header.height);
+      await this.ensureLatestHeight();
       const providersResponse = await this.getAllProviders(chainName);
       const provider = providersResponse.stakeEntry.find(
         (provider: { address: string }) => provider.address === address
@@ -64,29 +74,26 @@ export const useLavaProvidersStore = defineStore('providersStore', {
       return providerWithTotalStake;
     },
     async getProviderChains(address: string) {
+      await this.ensureLatestHeight();
       const providersResponse = await this.blockchain.rpc?.getProviderChains(
         address
       );
-      const prividerWithTotalStake = addTotalStakeAndJailed(
+      const providersWithTotalStake = addTotalStakeAndJailed(
         providersResponse.stakeEntries
       );
-      return prividerWithTotalStake.map((provider: any) => {
-        provider.status = getProviderStatus(
-          this.latestHeight,
-          provider
-        );
+      return providersWithTotalStake.map((provider: any) => {
+        provider.status = getProviderStatus(this.latestHeight, provider);
         return provider;
       });
     },
     async getActiveProviders(chainName: string) {
-      const latestBlock = await this.blockchain.rpc?.getBaseBlockLatest();
-      const latestHeight = latestBlock.block.header.height;
+      await this.ensureLatestHeight();
       const providersResponse = await this.blockchain.rpc?.getLavaProviders(
         chainName
       );
       const activeProviders = providersResponse.stakeEntry.filter(
         (provider: { stake_applied_block: string }) =>
-          Number(provider.stake_applied_block) <= Number(latestHeight)
+          Number(provider.stake_applied_block) <= Number(this.latestHeight)
       );
       const activeProvidersWithTotalStake =
         addTotalStakeAndJailed(activeProviders);
@@ -102,12 +109,11 @@ export const useLavaProvidersStore = defineStore('providersStore', {
       return sortedByTotalStake;
     },
     async getFrozenProviders(chainName: string) {
-      const latestBlock = await this.blockchain.rpc?.getBaseBlockLatest();
-      const latestHeight = latestBlock.block.header.height;
+      await this.ensureLatestHeight();
       const providersResponse = await this.getAllProviders(chainName);
       const frozenProviders = providersResponse.stakeEntry.filter(
         (provider: { stake_applied_block: string }) =>
-          Number(provider.stake_applied_block) > Number(latestHeight)
+          Number(provider.stake_applied_block) > Number(this.latestHeight)
       );
       const frozenProvidersWithTotalStake = addTotalStakeAndJailed(
         frozenProviders
@@ -120,6 +126,7 @@ export const useLavaProvidersStore = defineStore('providersStore', {
       return frozenProvidersWithTotalStake;
     },
     async getJailedProviders(chainName: string) {
+      await this.ensureLatestHeight();
       const providersResponse = await this.getAllProviders(chainName);
       const providersWithData = addTotalStakeAndJailed(
         providersResponse.stakeEntry
