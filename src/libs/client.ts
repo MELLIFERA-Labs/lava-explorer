@@ -367,4 +367,10 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   async getLavaSpecByChainID(chainID: string) {
     return this.request({url: "/lavanet/lava/spec/spec/{chainID}", adapter} as Request<{Spec: any}>, { chainID });
   }
+  async delegatorProviders(address: string) {
+    return this.request({url: "/lavanet/lava/dualstaking/delegator_providers/{address}", adapter} as Request<{delegations: any}>, { address });
+  }
+  async getRewardsFromProvider(address: string) {
+    return this.request({url: "/lavanet/lava/dualstaking/delegator_rewards/{address}", adapter} as Request<{rewards: any}>, { address });
+  }
 }
