@@ -136,7 +136,6 @@ function loadAccount(address: string) {
       const allProviders = x.delegations.filter(
         (p: { provider: string }) => p.provider !== 'empty_provider'
       );
-      console.log('----->', x.delegations)
       delegationProviders.value = {
         delegations: allProviders,
       };
@@ -647,7 +646,7 @@ function mapAmount(
                 {{
                   format.formatTokens(
                     rewardsFromProvider?.rewards?.find(
-                      (x) =>
+                      (x: any) =>
                         x.provider === p.provider && x.chain_id === p.chainID
                     )?.amount
                   )
