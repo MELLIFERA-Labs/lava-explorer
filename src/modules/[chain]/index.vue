@@ -19,7 +19,7 @@ import CardStatisticsVertical from '@/components/CardStatisticsVertical.vue';
 import ProposalListItem from '@/components/ProposalListItem.vue';
 import ArrayObjectElement from '@/components/dynamic/ArrayObjectElement.vue'
 import AdBanner from '@/components/ad/AdBanner.vue';
-
+import PingTokenConvert from '@/widget-lib/components/TokenConvert/index.vue'
 const props = defineProps(['chain']);
 
 const blockchain = useBlockchain();
@@ -380,8 +380,8 @@ const amount = computed({
         <RouterLink to="/wallet/receive" class="btn !bg-info !border-info text-white hidden">{{ $t('index.receive') }}</RouterLink>
       </div>
       <Teleport to="body">
-        <ping-token-convert :chain-name="blockchain?.current?.prettyName" :endpoint="blockchain?.endpoint?.address"
-          :hd-path="walletStore?.connectedWallet?.hdPath"></ping-token-convert>
+        <PingTokenConvert :chain-name="blockchain?.current?.prettyName" :endpoint="blockchain?.endpoint?.address"
+          :hd-path="walletStore?.connectedWallet?.hdPath"></PingTokenConvert>
       </Teleport>
     </div>
 

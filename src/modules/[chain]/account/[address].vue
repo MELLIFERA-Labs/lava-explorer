@@ -585,7 +585,7 @@ function mapAmount(
       <div class="flex justify-between">
         <h3 class="card-title">Available for restake: <span class="text-primary">{{ format.formatToken(availableForRestakeProvider.amount, true, '0,0.[000]') }} </span></h3>
         <div class="flex justify-end">
-          <label for="withdraw" class="btn btn-primary btn-sm" @click=""
+          <label for="lava_restake" class="btn btn-primary btn-sm"  @click="dialog.open('lava_restake', {}, updateEvent)"
             >Restake</label
           >
         </div>

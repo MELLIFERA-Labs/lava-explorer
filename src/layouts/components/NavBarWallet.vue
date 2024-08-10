@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router'
 import { useBaseStore, useBlockchain, useWalletStore } from '@/stores';
 import { Icon } from '@iconify/vue';
 import { ref, computed } from 'vue';
-
+import PingWalletConnect from '@/widget-lib/components/ConnectWallet/index.vue'
 const route = useRoute();
 const walletStore = useWalletStore();
 const chainStore = useBlockchain();
@@ -12,7 +12,7 @@ const baseStore = useBaseStore();
 //   console.log(m, s);
 // });
 function walletStateChange(res: any) {
-  walletStore.setConnectedWallet(res.detail?.value);
+  walletStore.setConnectedWallet(res?.value);
 }
 let showCopyToast = ref(0);
 async function copyAdress(address: string) {
@@ -95,7 +95,7 @@ const params = computed(() => {
     </div>
   </div>
   <Teleport to="body">
-    <ping-connect-wallet :chain-id="baseStore.currentChainId || 'cosmoshub-4'" :hd-path="chainStore.defaultHDPath"
+    <PingWalletConnect :chain-id="baseStore.currentChainId || 'cosmoshub-4'" :hd-path="chainStore.defaultHDPath"
       :addr-prefix="chainStore.current?.bech32Prefix || 'cosmos'" @connect="walletStateChange"
       @keplr-config="walletStore.suggestChain()"  :params="params" />
   </Teleport>
