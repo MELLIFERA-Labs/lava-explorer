@@ -114,7 +114,7 @@ function initial() {
         activeValidators.value = x.validators;
         if (!params.value.validator_address) {
             validator.value = x.validators.find(
-                (v) => v.description.identity === '6783E9F948541962'
+                (v: any) => v.description.identity === '6783E9F948541962'
             )?.operator_address;
         }
     });

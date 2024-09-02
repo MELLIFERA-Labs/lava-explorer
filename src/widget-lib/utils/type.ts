@@ -1,5 +1,5 @@
-import { EncodeObject } from '@cosmjs/proto-signing';
-import { SignerData, StdFee } from '@cosmjs/stargate';
+import type { EncodeObject } from '@cosmjs/proto-signing';
+import type { SignerData, StdFee } from '@cosmjs/stargate';
 import type { App, Plugin } from 'vue';
 export const withInstall = <T>(comp: T) => {
   const c = comp as any;

@@ -85,6 +85,7 @@ const isValid = computed(() => {
 
 
 function initial() {
+    //@ts-ignore
     denom.value = props.params?.fees?.denom || '';
     // getStakingParam(props.endpoint).then((x) => {
     //     denom.value = x.params?.bond_denom;

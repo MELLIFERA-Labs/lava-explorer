@@ -9,20 +9,26 @@ import type { Transaction } from "../../utils/type"
 import { type Chain, createTxRawEIP712, signatureToWeb3Extension } from "@tharsis/transactions";
 import { createEIP712, generateFee, generateMessageWithMultipleTransactions, generateTypes } from "@tharsis/eip712";
 import { defaultMessageAdapter } from "../EthermintMessageAdapter";
-import { createTransactionWithMultipleMessages } from "@tharsis/proto";
+import * as thrProto from "@tharsis/proto";
+const createTransactionWithMultipleMessages = thrProto.createTransactionWithMultipleMessages
 import { encodeSecp256k1Pubkey, makeSignDoc as makeSignDocAmino } from "@cosmjs/amino";
-import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import * as ProtoTxRaw from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { stringToPath } from '@cosmjs/crypto'
-import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
+import * as ProtoSignMode from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
+const SignModeV = ProtoSignMode.SignMode;
 import { ethermintToEth } from "../../utils/format";
 import { createWasmAminoConverters } from "@cosmjs/cosmwasm-stargate";
-
+import {lavanetAminoConverters} from '@lavanet/lavajs/dist/codegen/lavanet/client'
+const TxRawV = ProtoTxRaw.TxRaw;
 export class LedgerWallet implements AbstractWallet {
+    // @ts-ignore
     name: WalletName.Ledger
     transport: string
     hdPath: string
     registry: Registry
-    aminoTypes = new AminoTypes({...createDefaultAminoConverters(), ...createWasmAminoConverters()})
+    // @ts-ignore
+    aminoTypes = new AminoTypes({...createDefaultAminoConverters(), ...createWasmAminoConverters(), ...lavanetAminoConverters})
     conf: WalletArgument
     constructor(arg: WalletArgument, registry: Registry) {
         this.transport = arg.transport || 'usb'
@@ -53,6 +59,7 @@ export class LedgerWallet implements AbstractWallet {
             default:
         }
         // const path = stringToPath(this.hdPath)
+        //@ts-ignore
         return new LedgerSigner(transport, { ledgerAppName, hdPaths: [hdPath] })
     }
 
@@ -124,11 +131,11 @@ export class LedgerWallet implements AbstractWallet {
         const rawTx = this.makeRawTxEvmos(sender, tx.messages, tx.memo, tx.fee, sig, chain)
         return rawTx
     }
-
+    //@ts-ignore
     makeRawTxEvmos(sender, messages, memo, fee, signature, chain): Uint8Array {
         /// evmos style
         /// *
-        const protoMsgs = messages.map(x => {
+        const protoMsgs = messages.map((x:any) => {
           const adapter = defaultMessageAdapter[x.typeUrl]
           return adapter.toProto(x)
         })
@@ -168,7 +175,7 @@ export class LedgerWallet implements AbstractWallet {
             throw new Error("Failed to retrieve account from signer");
         }
         const pubkey = encodePubkey(encodeSecp256k1Pubkey(accountFromSigner.pubkey));
-        const signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON;
+        const signMode = SignModeV.SIGN_MODE_LEGACY_AMINO_JSON;
         const msgs = tx.messages.map((msg) => this.aminoTypes.toAmino(msg));
         const signDoc = makeSignDocAmino(msgs, tx.fee, tx.chainId, tx.memo, tx.signerData.accountNumber, tx.signerData.sequence);
         const { signature, signed } = await signer.signAmino(signerAddress, signDoc);
@@ -193,7 +200,7 @@ export class LedgerWallet implements AbstractWallet {
             signed.fee.payer,
             signMode,
         );
-        return TxRaw.fromPartial({
+        return TxRawV.fromPartial({
             bodyBytes: signedTxBodyBytes,
             authInfoBytes: signedAuthInfoBytes,
             signatures: [fromBase64(signature.signature)],

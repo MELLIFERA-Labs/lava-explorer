@@ -20,6 +20,7 @@ import ProposalListItem from '@/components/ProposalListItem.vue';
 import ArrayObjectElement from '@/components/dynamic/ArrayObjectElement.vue'
 import AdBanner from '@/components/ad/AdBanner.vue';
 import PingTokenConvert from '@/widget-lib/components/TokenConvert/index.vue'
+import EpochCountdown from "@/components/EpochCountdown.vue";
 const props = defineProps(['chain']);
 
 const blockchain = useBlockchain();
@@ -29,6 +30,7 @@ const format = useFormatter();
 const dialog = useTxDialog();
 const stakingStore = useStakingStore();
 const paramStore = useParamStore()
+const startEpoch = ref('0')
 const coinInfo = computed(() => {
   return store.coinInfo;
 });
@@ -36,7 +38,12 @@ const coinInfo = computed(() => {
 onMounted(() => {
   store.loadDashboard();
   walletStore.loadMyAsset();
+  walletStore.loadLavaAsset();
   paramStore.handleAbciInfo()
+  // blockchain.rpc.getEpochDetails()
+  //     .then((res) => {
+  //       startEpoch.value = res.EpochDetails.startBlock
+  //     })
   // if(!(coinInfo.value && coinInfo.value.name)) {
   // }
 });
@@ -48,6 +55,7 @@ blockchain.$subscribe((m, s) => {
     currName.value = s.chainName
     store.loadDashboard();
     walletStore.loadMyAsset();
+    walletStore.loadLavaAsset();
     paramStore.handleAbciInfo()
   }
 });
@@ -99,6 +107,7 @@ const color = computed(() => {
 
 function updateState() {
   walletStore.loadMyAsset()
+  walletStore.loadLavaAsset()
 }
 
 function trustColor(v: string) {
@@ -136,7 +145,7 @@ const amount = computed({
             }}</span>)
           </div>
           <div class="text-xs mt-2">
-            {{ $t('index.rank') }}:
+            {{ $t('index.rank') }}
             <div class="badge text-xs badge-error bg-[#fcebea] dark:bg-[#41384d] text-red-400">
               #{{ coinInfo.market_cap_rank }}
             </div>
@@ -264,7 +273,7 @@ const amount = computed({
     </div>
 
     <AdBanner id="chain-home-banner-ad" unit="banner" width="970px" height="90px" />
-
+    <EpochCountdown epoch-interval-block="60" label="Current epoch" />
     <div v-if="blockchain.supportModule('governance')" class="bg-base-100 rounded mt-4 shadow">
       <div class="px-4 pt-4 pb-2 text-lg font-semibold text-main">
         {{ $t('index.active_proposals') }}
@@ -284,7 +293,7 @@ const amount = computed({
           class="float-right text-sm cursor-pointert link link-primary no-underline font-medium"
           :to="`/${chain}/account/${walletStore.currentAddress}`">{{ $t('index.more') }}</RouterLink>
       </div>
-      <div class="grid grid-cols-1 md:!grid-cols-4 auto-cols-auto gap-4 px-4 pb-6">
+      <div class="grid grid-cols-1 md:!grid-cols-5 auto-cols-auto gap-5 px-4 pb-6">
         <div class="bg-gray-100 dark:bg-[#373f59] rounded-sm px-4 py-3">
           <div class="text-sm mb-1">{{ $t('account.balance') }}</div>
           <div class="text-lg font-semibold text-main">
@@ -313,6 +322,15 @@ const amount = computed({
           </div>
         </div>
         <div class="bg-gray-100 dark:bg-[#373f59] rounded-sm px-4 py-3">
+          <div class="text-sm mb-1">Reward from providers</div>
+          <div class="text-lg font-semibold text-main">
+            {{ format.formatToken(walletStore.rewardAmountLava) }}
+          </div>
+          <div class="text-sm" :class="color">
+            ${{ format.tokenValue(walletStore.rewardAmountLava) }}
+          </div>
+        </div>
+        <div class="bg-gray-100 dark:bg-[#373f59] rounded-sm px-4 py-3">
           <div class="text-sm mb-1">{{ $t('index.unbonding') }}</div>
           <div class="text-lg font-semibold text-main">
             {{ format.formatToken(walletStore.unbondingAmount) }}
@@ -324,6 +342,7 @@ const amount = computed({
       </div>
 
       <div v-if="walletStore.delegations.length > 0" class="px-4 pb-4 overflow-auto">
+        <h2 class="text-lg font-semibold text-main">Validators delegations</h2>
         <table class="table table-compact w-full table-zebra">
           <thead>
             <tr>
@@ -371,15 +390,71 @@ const amount = computed({
           </tbody>
         </table>
       </div>
+      <div v-if="walletStore.providerDelegations.length > 0" class="px-4 pb-4 overflow-auto">
+        <h2 class="text-lg font-semibold text-main">Providers delegations</h2>
+        <table class="table table-compact w-full table-zebra">
+          <thead>
+          <tr>
+            <th>Provider</th>
+            <th>CHAIN_ID</th>
+            <th>{{ $t('account.delegation') }}</th>
+            <th>{{ $t('account.rewards') }}</th>
+            <th>{{ $t('account.action') }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="(item, index) in walletStore.providerDelegations" :key="index">
+            <td>
+              <RouterLink class="link link-primary no-underline" :to="`/${chain}/providers/${item.chainID}/${item.provider}`">
+                {{
+                 walletStore.getProviderName(item?.provider)
+                }}
+              </RouterLink>
+            </td>
+            <td>
+            <RouterLink class="link link-primary no-underline" :to="`/${chain}/providers/${item.chainID}`">{{
+                item.chainID
+              }}</RouterLink>
+            </td>
+            <td>{{ format.formatToken(item.amount, true, '0,0.[00]') }}</td>
+            <td>
+              {{
+                format.formatTokens(
+                    walletStore.providerRewards?.rewards?.find(
+                        (x: any) =>
+                            x.provider === item.provider && x.chain_id === item.chainID
+                    )?.amount
+                )
+              }}
+            </td>
+            <td>
+              <div>
+                <label for="lava_redelegate" class="btn !btn-xs !btn-primary btn-ghost rounded-sm mr-2"
+                       @click="dialog.open('lava_redelegate', {from_provider: item.provider, from_chain_id: item.chainID}, updateState)">
+                  redelegate
+                </label>
+                <label for="lava_withdraw" class="btn !btn-xs !btn-primary btn-ghost rounded-sm"
+                       @click="dialog.open('lava_withdraw', {  }, updateState)">
+                  {{ $t('index.btn_withdraw_reward') }}
+                </label>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <div class="grid grid-cols-3 gap-4 px-4 pb-6 mt-4">
-        <label for="PingTokenConvert" class="btn btn-primary text-white">{{ $t('index.btn_swap') }}</label>
+      <div class="grid md:!grid-cols-4 gap-4 auto-cols-auto px-4 pb-6 mt-4">
+        <label for="PingTokenConvert" class="btn btn-warning text-white">{{ $t('index.btn_swap') }}</label>
         <label for="send" class="btn !bg-yes !border-yes text-white" @click="dialog.open('send', {}, updateState)">{{ $t('account.btn_send') }}</label>
         <label for="delegate" class="btn !bg-info !border-info text-white"
           @click="dialog.open('delegate', {}, updateState)">{{ $t('account.btn_delegate') }}</label>
+        <label for="lava_delegate" class="btn !bg-primary text-white"
+               @click="dialog.open('lava_delegate', {}, updateState)">delegate & restake</label>
         <RouterLink to="/wallet/receive" class="btn !bg-info !border-info text-white hidden">{{ $t('index.receive') }}</RouterLink>
       </div>
       <Teleport to="body">
+        <!-- @vue-ignore -->
         <PingTokenConvert :chain-name="blockchain?.current?.prettyName" :endpoint="blockchain?.endpoint?.address"
           :hd-path="walletStore?.connectedWallet?.hdPath"></PingTokenConvert>
       </Teleport>
@@ -398,7 +473,7 @@ const amount = computed({
       <div class="px-4 pt-4 pb-2 text-lg font-semibold text-main">
         {{ $t('index.node_info') }}
       </div>
-      <ArrayObjectElement :value="paramStore.nodeVersion?.items" :thead="false" />      
+      <ArrayObjectElement :value="paramStore.nodeVersion?.items" :thead="false" />
       <div class="h-4"></div>
     </div>
   </div>

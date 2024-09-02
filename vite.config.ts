@@ -57,15 +57,25 @@ export default defineConfig({
       ],
     }),
     DefineOptions(),
-    nodePolyfills({
-      process: true,
-      buffer: true,
-    }),
-    inject({ Buffer: ['buffer', 'Buffer'] }),
+      process.env.NODE_ENV !== 'production' && inject({ Buffer: ['buffer', 'Buffer'] }),
+    {...nodePolyfills(), enforce: 'post'},
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console logs
+        drop_debugger: true, // Remove debugger statements
+        pure_funcs: ['console.log'], // Remove specific function calls
+      },
+    },
+    commonjsOptions: {
+      transformMixedEsModules: true,
     },
   },
   optimizeDeps: {

@@ -373,4 +373,7 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   async getRewardsFromProvider(address: string) {
     return this.request({url: "/lavanet/lava/dualstaking/delegator_rewards/{address}", adapter} as Request<{rewards: any}>, { address });
   }
+  async getEpochDetails() {
+    return this.request({url: "/lavanet/lava/epochstorage/epoch_details", adapter} as Request<{EpochDetails: any}>, {});
+  }
 }

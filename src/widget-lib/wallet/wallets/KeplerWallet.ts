@@ -2,16 +2,21 @@ import { fromBase64, fromBech32, toHex } from "@cosmjs/encoding";
 import { Registry, type TxBodyEncodeObject, encodePubkey, makeAuthInfoBytes, makeSignDoc } from "@cosmjs/proto-signing"
 import { type AbstractWallet, type  Account, type WalletArgument, WalletName, keyType } from "../Wallet"
 import type { Transaction } from "../../utils/type"
-import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { Any } from "cosmjs-types/google/protobuf/any";
-import { PubKey } from 'cosmjs-types/cosmos/crypto/secp256k1/keys'
-import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
+import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";;
 import { AminoTypes, createDefaultAminoConverters } from "@cosmjs/stargate";
-import { encodeSecp256k1Pubkey, makeSignDoc as makeSignDocAmino } from "@cosmjs/amino";
+import { makeSignDoc as makeSignDocAmino } from "@cosmjs/amino";
 import { createWasmAminoConverters } from "@cosmjs/cosmwasm-stargate";
 import {lavanetAminoConverters} from '@lavanet/lavajs/dist/codegen/lavanet/client'
-
+import * as ProtoTxRaw from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import * as ProtoAny from "cosmjs-types/google/protobuf/any";
+import * as ProtoPubKey from "cosmjs-types/cosmos/crypto/secp256k1/keys";
+import * as ProtoSignMode from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
+const SignModeV = ProtoSignMode.SignMode;
+const PubKeyV = ProtoPubKey.PubKey;
+const TxRawV = ProtoTxRaw.TxRaw;
+const AnyV = ProtoAny.Any;
 export class KeplerWallet implements AbstractWallet {
+    // @ts-ignore
     name: WalletName.Keplr
     chainId: string
     registry: Registry
@@ -57,9 +62,9 @@ export class KeplerWallet implements AbstractWallet {
         if (!accountFromSigner) {
             throw new Error("Failed to retrieve account from signer");
         }
-        const pubkey = Any.fromPartial({
+        const pubkey = AnyV.fromPartial({
             typeUrl: keyType(transaction.chainId),
-            value: PubKey.encode({
+            value: PubKeyV.encode({
                 key: accountFromSigner.pubkey,
             }).finish()
         })
@@ -84,7 +89,7 @@ export class KeplerWallet implements AbstractWallet {
         // @ts-ignore
         const offlineSigner = window.getOfflineSigner(this.chainId)
         const { signature, signed } = await offlineSigner.signDirect(transaction.signerAddress, signDoc);;
-        return TxRaw.fromPartial({
+        return TxRawV.fromPartial({
             bodyBytes: signed.bodyBytes,
             authInfoBytes: signed.authInfoBytes,
             signatures: [fromBase64(signature.signature)],
@@ -99,13 +104,13 @@ export class KeplerWallet implements AbstractWallet {
             throw new Error("Failed to retrieve account from signer");
         }
         // const pubkey = encodePubkey(encodeSecp256k1Pubkey(accountFromSigner.pubkey));
-        const pubkey = Any.fromPartial({
+        const pubkey = AnyV.fromPartial({
             typeUrl: keyType(tx.chainId),
-            value: PubKey.encode({
+            value: PubKeyV.encode({
                 key: accountFromSigner.pubkey,
             }).finish()
         })
-        const signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON;
+        const signMode = SignModeV.SIGN_MODE_LEGACY_AMINO_JSON;
         const msgs = tx.messages.map((msg) => this.aminoTypes.toAmino(msg));
         const signDoc = makeSignDocAmino(msgs, tx.fee, tx.chainId, tx.memo, tx.signerData.accountNumber, tx.signerData.sequence);
         
@@ -114,7 +119,7 @@ export class KeplerWallet implements AbstractWallet {
         const { signature, signed } = await offlineSigner.signAmino(tx.signerAddress, signDoc);
 
         const signedTxBody = {
-            messages: signed.msgs.map((msg) => this.aminoTypes.fromAmino(msg)),
+            messages: signed.msgs.map((msg: any) => this.aminoTypes.fromAmino(msg)),
             memo: signed.memo,
         };
         const signedTxBodyEncodeObject: TxBodyEncodeObject = {
@@ -133,7 +138,7 @@ export class KeplerWallet implements AbstractWallet {
             signed.fee.payer,
             signMode,
         );
-        return TxRaw.fromPartial({
+        return TxRawV.fromPartial({
             bodyBytes: signedTxBodyBytes,
             authInfoBytes: signedAuthInfoBytes,
             signatures: [fromBase64(signature.signature)],

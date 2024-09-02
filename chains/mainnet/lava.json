@@ -2,13 +2,13 @@
     "chain_name": "lava",
     "api": [
         {
-            "address": "http://128.140.75.143:8080",
+            "address": "https://lava-testnet-rest.mellifera.network",
             "provider": "MELLIFERA"
         }
     ],
     "rpc": [
         {
-            "address": "http://128.140.75.143:8081",
+            "address": "https://lava-testnet-rpc.mellifera.network",
             "provider": "MELLIFERA"
         }
     ],

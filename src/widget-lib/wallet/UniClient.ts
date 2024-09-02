@@ -2,7 +2,7 @@ import { toBase64, fromBase64, toHex, fromBech32 } from "@cosmjs/encoding";
 import { type EncodeObject, encodePubkey, Registry } from '@cosmjs/proto-signing'
 import { encodeSecp256k1Pubkey } from "@cosmjs/amino";
 import { defaultRegistryTypes } from "@cosmjs/stargate";
-import { AuthInfo, TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
 import { type AbstractWallet, type WalletArgument, WalletName, createWallet } from "./Wallet"
 import {lavanetProtoRegistry} from '@lavanet/lavajs/dist/codegen/lavanet/client'
@@ -10,8 +10,10 @@ import { post } from "../utils/http";
 import { BroadcastMode, type Transaction, type TxResponse } from "../utils/type";
 import { wasmTypes } from "@cosmjs/cosmwasm-stargate/build/modules";
 import { makeAuthInfoBytes, makeSignDoc, type TxBodyEncodeObject } from "@cosmjs/proto-signing/build";
-import { Any } from "cosmjs-types/google/protobuf/any";
-
+import * as ProtoAny from "cosmjs-types/google/protobuf/any";
+import * as ProtoTxRaw from "cosmjs-types/cosmos/tx/v1beta1/tx";
+const TxRawV = ProtoTxRaw.TxRaw;
+const AnyV = ProtoAny.Any;
 export function isEthermint(chainId: string) {
   return chainId.search(/\w+_\d+-\d+/g) > -1
 }
@@ -20,6 +22,7 @@ export class UniClient {
     registry: Registry
     wallet: AbstractWallet
     constructor(name: WalletName, arg: WalletArgument) {
+        //@ts-ignore
         this.registry = new Registry([...defaultRegistryTypes, ...wasmTypes, ...lavanetProtoRegistry])
         this.wallet = createWallet(name, arg, this.registry)
     }
@@ -44,7 +47,7 @@ export class UniClient {
         mode: BroadcastMode = BroadcastMode.SYNC
       ) {
 
-        const pubkey = Any.fromPartial({
+        const pubkey = AnyV.fromPartial({
             typeUrl: '/cosmos.crypto.ed25519.PubKey',
             value: new Uint8Array()
         })
@@ -66,13 +69,13 @@ export class UniClient {
             transaction.fee.payer,
         );
 
-        const txRaw =  TxRaw.fromPartial({
+        const txRaw =  TxRawV.fromPartial({
             bodyBytes: txBodyBytes,
             authInfoBytes: authInfoBytes,
             signatures: [new Uint8Array()],
         });
 
-        const txbytes = toBase64(TxRaw.encode(txRaw).finish())
+        const txbytes = toBase64(TxRawV.encode(txRaw).finish())
         const request = {
           tx_bytes: txbytes,
           mode, // BROADCAST_MODE_SYNC, BROADCAST_MODE_BLOCK, BROADCAST_MODE_ASYNC
@@ -125,9 +128,9 @@ export class UniClient {
     // }
 
 
-  async broadcastTx(endpoint, bodyBytes: TxRaw, mode: BroadcastMode = BroadcastMode.SYNC) : Promise<{tx_response: TxResponse}> {
+  async broadcastTx(endpoint: any, bodyBytes: TxRaw, mode: BroadcastMode = BroadcastMode.SYNC) : Promise<{tx_response: TxResponse}> {
     // const txbytes = bodyBytes.authInfoBytes ? TxRaw.encode(bodyBytes).finish() : bodyBytes
-    const txbytes = TxRaw.encode(bodyBytes).finish() 
+    const txbytes = TxRawV.encode(bodyBytes).finish()
     const txString = toBase64(txbytes)
     const txRaw = {
       tx_bytes: txString,

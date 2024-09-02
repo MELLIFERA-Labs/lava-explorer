@@ -22,7 +22,7 @@ export async function post(url: string, data: any) {
       return response.json() // parses JSON response into native JavaScript objects
 }
 
-function findField(obj: any, name: string) {
+function findField(obj: any, name: string): any {
 
     if(!obj) return undefined
 
@@ -57,7 +57,7 @@ export async function getAccount(endpoint: string, address: string) {
                 sequence: findField(res, "sequence")
             }
         }      
-    }catch(err) {
+    }catch(err: any) {
         throw new Error(err)
     }
 
@@ -85,6 +85,11 @@ export async function getCoinMetadata(endpoint: string, denom: string) {
 
 export async function getDelegateRewards(endpoint: string, address: string) {
     const url = `${endpoint}/cosmos/distribution/v1beta1/delegators/${address}/rewards`
+    return get(url)
+}
+
+export async function getDelegateLavaRewards(endpoint: string, address: string) {
+    const url = `${endpoint}/lavanet/lava/dualstaking/delegator_rewards/${address}`
     return get(url)
 }
 

@@ -4,6 +4,7 @@ import {getDelegatorProviders, getProviders, getSpecs, getStakingParam} from '..
 import type {Coin, CoinMetadata} from '../../../utils/type';
 import {TokenUnitConverter} from '../../../utils/TokenUnitConverter';
 import {useRouter} from 'vue-router';
+import {decimal2percent} from "@/widget-lib/utils/format";
 const router = useRouter();
 const props = defineProps({
   endpoint: { type: String, required: true },
@@ -13,11 +14,10 @@ const props = defineProps({
   params: String,
 });
 const params = computed(() => JSON.parse(props.params || '{}'));
-const setIsLavaWarning = ref(false);
 const provider = ref('');
 const specChainId = ref('');
 
-const providers = ref([] as any[]);
+const providers = ref([] as  any[]);
 const specs = ref([] as any[]);
 const inactiveValidators = ref([]);
 const stakingDenom = ref('');
@@ -25,7 +25,18 @@ const unbondingTime = ref('');
 const amount = ref('');
 const amountDenom = ref('');
 const userProviders = ref([]);
-const isLavaWarning = computed(() => setIsLavaWarning.value);
+
+const sourceProvider = ref('');
+const sourceChain = computed(() => {
+  // @ts-ignore
+  const s = specs.value.find(s => s.chainID === params.value.from_chain_id)
+  if(s) {
+    // @ts-ignore
+    return ` ${ s.chainName } - ${ s.chainID }`
+  }
+  return params.value.chain_id
+})
+
 const msgs = computed(() => {
   const convert = new TokenUnitConverter(props.metadata);
   return [
@@ -33,9 +44,9 @@ const msgs = computed(() => {
       typeUrl: '/lavanet.lava.dualstaking.MsgRedelegate',
       value: {
         creator: props.sender,
-        fromProvider: 'empty_provider',
+        fromProvider: params.value.from_provider,
         toProvider: provider.value,
-        fromChainID: "*",
+        fromChainID: params.value.from_chain_id,
         toChainID: specChainId.value,
         amount: convert.displayToBase(stakingDenom.value, {
           amount: String(amount.value),
@@ -60,10 +71,10 @@ const list: ComputedRef<
 const available = computed(() => {
   const convert = new TokenUnitConverter(props.metadata);
   // Handle case where userProviders is not yet populated
-  const emptyProvider = userProviders.value?.find(
-      (x: any) => x.provider === 'empty_provider'
+  const currentProvider = userProviders.value?.find(
+      (x: any) => x.provider === params.value.from_provider && x.chainID=== params.value.from_chain_id
   ) as any | undefined;
-  const base = emptyProvider?.amount || { amount: '0', denom: stakingDenom.value }
+  const base = currentProvider?.amount || { amount: '0', denom: stakingDenom.value }
   return {
     base,
     display: convert.baseToUnit(base, amountDenom.value),
@@ -104,16 +115,9 @@ const isValid = computed(() => {
   }
   return { ok, error };
 });
-function matchMoniker(p: any) {
-  return p?.description?.moniker?.trim()?.toLowerCase()?.includes('mellifera')
-      || p?.moniker?.trim()?.toLowerCase()?.includes('mellifera');
-}
 function fetchProviders(chainID: string) {
-   getProviders(props.endpoint, chainID).then((x) => {
+  getProviders(props.endpoint, chainID).then((x) => {
     providers.value = x.stakeEntry;
-    if(!params.value.provider_address) {
-      provider.value = x.stakeEntry.find(matchMoniker)?.address || '';
-    }
   });
 }
 watch(specChainId, (current,prev) => {
@@ -133,15 +137,11 @@ function initial() {
   provider.value = params.value.provider_address;
   specChainId.value = params.value.chain_id;
   getDelegatorProviders(props.endpoint, props.sender).then((x) => {
-    const emptyProvider = x.delegations.find(
-        (x: any) => x.provider === 'empty_provider'
-    );
-    if(!emptyProvider) {
-      setIsLavaWarning.value = true;
-    } else {
-      setIsLavaWarning.value = false;
-    }
     userProviders.value = x.delegations;
+  });
+  getProviders(props.endpoint, params.value.from_chain_id).then((x) => {
+    const p = x.stakeEntry.find((p: any) => p.address === params.value.from_provider)
+    sourceProvider.value = p ? `${ p.moniker || p.description?.moniker || p.address} (${p.delegate_commission}%)` : params.value.from_provider
   });
   if(specChainId.value){
     fetchProviders(specChainId.value);
@@ -154,31 +154,11 @@ function initial() {
     specs.value = x.chainInfoList;
   });
 }
-function reloadPage() {
-  console.log('reloadPage')
 
-  window.location.href = router.resolve({name: 'chain-staking'}).href;
-}
-defineExpose({ msgs, isValid, initial, noSend: isLavaWarning });
+defineExpose({ msgs, isValid, initial });
 </script>
 <template>
-  <div v-if="isLavaWarning">
-    <div class="mt-5 p-4 border-l-4 border-yellow-400 bg-yellow-50 text-yellow-700 rounded shadow-lg">
-      <div class="flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" aria-label="Warning" class="h-6 w-6 mr-3 text-yellow-700" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm0 20.4c-.883 0-1.6-.717-1.6-1.6s.717-1.6 1.6-1.6 1.6.717 1.6 1.6-.717 1.6-1.6 1.6zm1.6-5.6h-3.2V6.4h3.2V14.8z"/>
-        </svg>
-        <span class="flex-grow" >
-        To proceed with restaking, please delegate to one or more
-            <a class="underline font-semibold text-blue-600 hover:text-blue-800 cursor-pointer" @click="reloadPage" >validators</a>
-      </span>
-      </div>
-      <blockquote class="mt-2 pl-4 border-l-2 border-gray-300 text-sm text-gray-600">
-        By delegating, you help secure the network and earn rewards from validator. Once delegated, you can restake this balance to provider(s), improving network performance and earning rewards from provider(s).
-      </blockquote>
-    </div>
-  </div>
-  <div v-else>
+  <div>
     <div class="form-control">
       <label class="label">
         <span class="label-text">Sender</span>
@@ -189,6 +169,19 @@ defineExpose({ msgs, isValid, initial, noSend: isLavaWarning });
           class="text-gray-600 dark:text-white input border !border-gray-300 dark:!border-gray-600"
       />
     </div>
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">Source Provider</span>
+      </label>
+      <input :value="sourceProvider" type="text" class="input border border-gray-300 dark:border-gray-600 dark:text-white" readonly/>
+    </div>
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">Source Chain</span>
+      </label>
+      <input :value="sourceChain" type="text" class="input border border-gray-300 dark:border-gray-600 dark:text-white" readonly/>
+    </div>
+
     <div class="form-control">
       <label class="label">
         <span class="label-text">Select chain</span>
@@ -222,7 +215,6 @@ defineExpose({ msgs, isValid, initial, noSend: isLavaWarning });
         </option>
       </select>
     </div>
-
     <div class="form-control">
       <label class="label">
         <span class="label-text">Amount</span>

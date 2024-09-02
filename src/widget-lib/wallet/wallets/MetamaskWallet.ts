@@ -18,6 +18,7 @@ import { Any } from "cosmjs-types/google/protobuf/any";
 import { PubKey } from 'cosmjs-types/cosmos/crypto/secp256k1/keys'
 
 export class MetamaskWallet implements AbstractWallet {
+    //@ts-ignore
     name: WalletName.Metamask;
     chainId: string;
     registry: Registry;
@@ -55,7 +56,7 @@ export class MetamaskWallet implements AbstractWallet {
         const hexPk = computePublicKey(uncompressedPk, true);
         const pk = toBase64(fromHex(hexPk.replace('0x', '')));
 
-        const connected = accounts.map((address) => ({
+        const connected = accounts.map((address: any) => ({
             address: ethToEthermint(address, this.prefix),
             algo: 'secp256k1',
             pubkey: pk,

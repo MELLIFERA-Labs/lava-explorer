@@ -26,6 +26,7 @@ import { connectSnap, getKey, getSnap, CosmjsOfflineSigner } from '@leapwallet/c
 // import { createWasmAminoConverters } from "@cosmjs/cosmwasm-stargate";
 
 export class MetamaskSnapWallet implements AbstractWallet {
+    // @ts-ignore
     name: WalletName.MetamaskSnap;
     chainId: string;
     registry: Registry;

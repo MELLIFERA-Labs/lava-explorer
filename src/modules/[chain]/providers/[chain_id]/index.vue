@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from 'vue';
 import { useLavaProvidersStore } from '@/stores/useProvidersStore';
 import { Icon } from '@iconify/vue';
 import { computed } from '@vue/reactivity';
-import { useFormatter, useStakingStore } from '@/stores';
+import {useFormatter, useStakingStore, useTxDialog} from '@/stores';
 import {useLavaSpecStore} from "@/stores/useLavaSpecStore";
 const props = defineProps(['chain_id', 'chain', 'spec_name']);
 const chainId = props.chain_id;
@@ -16,7 +16,7 @@ let jailedProviders = ref([] as any);
 const format = useFormatter();
 const tab = ref('active');
 const staking = useStakingStore();
-
+const dialog = useTxDialog();
 const cache = JSON.parse(localStorage.getItem('providers-avatars') || '{}');
 const avatars = ref(cache || {});
 const loadAvatar = (identity: string) => {
@@ -387,9 +387,9 @@ watch(activeProviders, (newValue: any) => {
                 </div>
                 <label
                   v-else
-                  for="delegate"
+                  for="lava_restake"
                   class="btn btn-xs btn-primary rounded-sm capitalize"
-                  @click="underDevelopmentAlert"
+                  @click="dialog.open('lava_restake', { provider_address: provider.address, chain_id: provider.chain })"
                   >restake</label
                 >
               </td>

@@ -1,14 +1,8 @@
-import { defineStore } from 'pinia';
-import { useBlockchain } from './useBlockchain';
-import { fromBech32, toBech32 } from '@cosmjs/encoding';
-import type {
-  Delegation,
-  Coin,
-  UnbondingResponses,
-  DelegatorRewards,
-  WalletConnected,
-} from '@/types';
-import { useStakingStore } from './useStakingStore';
+import {defineStore} from 'pinia';
+import {useBlockchain} from './useBlockchain';
+import {fromBech32, toBech32} from '@cosmjs/encoding';
+import type {Coin, Delegation, DelegatorRewards, UnbondingResponses, WalletConnected,} from '@/types';
+import {useStakingStore} from './useStakingStore';
 import router from '@/router'
 
 export const useWalletStore = defineStore('walletStore', {
@@ -18,7 +12,11 @@ export const useWalletStore = defineStore('walletStore', {
       delegations: [] as Delegation[],
       unbonding: [] as UnbondingResponses[],
       rewards: {total: [], rewards: []} as DelegatorRewards,
-      wallet: {} as WalletConnected
+      wallet: {} as WalletConnected,
+      providerDelegations: [] as any[],
+      providerRewards: {} as {rewards: any[]},
+      emptyDelegation: {} as any,
+      userProviders: {} as any,
     };
   },
   getters: {
@@ -58,6 +56,16 @@ export const useWalletStore = defineStore('walletStore', {
         (x: Coin) => x.denom === stakingStore.params.bond_denom
       );
       return reward || { amount: '0', denom: stakingStore.params.bond_denom };
+    },
+    rewardAmountLava() {
+      const stakingStore = useStakingStore();
+      // @ts-ignore
+      const totalRewards = this.providerRewards.rewards?.reduce((total, reward) => {
+        return total + reward.amount.reduce((sum: bigint, amountObj: {denom: string, amount: string}) => {
+          return sum + (amountObj.denom === stakingStore.params.bond_denom ? BigInt(amountObj.amount) : BigInt(0));
+        }, BigInt(0));
+      }, BigInt(0));
+      return totalRewards ? { amount: totalRewards.toString(), denom: stakingStore.params.bond_denom } : { amount: '0', denom: stakingStore.params.bond_denom };
     },
     unbondingAmount() {
       let amt = 0;
@@ -106,6 +114,50 @@ export const useWalletStore = defineStore('walletStore', {
         .then((x) => {
           this.rewards = x;
         });
+    },
+    loadLavaAsset() {
+      if (!this.currentAddress) return;
+       this.blockchain.rpc.getRewardsFromProvider(this.currentAddress).then((x) => {
+         console.log('provv231231231-=.',x)
+        this.providerRewards = x;
+      });
+       this.blockchain.rpc.delegatorProviders(this.currentAddress).then((x:any) => {
+          this.emptyDelegation = x.delegations.find(
+              (p: { provider: string }) => p.provider === 'empty_provider'
+          );
+          this.providerDelegations = x.delegations.filter(
+                (p: { provider: string }) => p.provider !== 'empty_provider'
+            );
+          return x
+       }).then((x: any) => {
+          for (const p of x.delegations) {
+            if (this.userProviders[p.provider]) {
+              continue;
+            }
+            this.blockchain.rpc.getProviderChains(p.provider).then((providers) => {
+              const providerWithMoniker = providers.stakeEntries.find(
+                  (p: { moniker: string; description: { moniker: string } }) =>
+                      p?.moniker?.length ?? p?.description?.moniker?.length
+              );
+              if (!providerWithMoniker) {
+                this.userProviders = {
+                  ...this.userProviders,
+                  [p.provider]: {},
+                };
+                return;
+              }
+              this.userProviders = {
+                ...this.userProviders,
+                [p.provider]: providerWithMoniker,
+              };
+            });
+          }
+       })
+    },
+
+    getProviderName(address: string) {
+      if (!this.currentAddress) return 'unknown';
+      return (this.userProviders[address]?.moniker || this.userProviders[address]?.description?.moniker) ?? this.currentAddress;
     },
     myBalance() {
       return this.blockchain.rpc.getBankBalances(this.currentAddress);

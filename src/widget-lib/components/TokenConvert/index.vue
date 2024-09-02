@@ -4,7 +4,7 @@ import { Icon } from '@iconify/vue';
 import { fromBech32, toBech32, toHex } from '@cosmjs/encoding';
 import { sha256 } from '@cosmjs/crypto';
 import ChainRegistryClient from '@ping-pub/chain-registry-client';
-import {
+import type {
     Asset,
     Chain,
     IBCInfo,
@@ -19,18 +19,18 @@ import {
     getTxByHash,
 } from '../../utils/http';
 import {
-    Account,
-    ConnectedWallet,
+    type Account,
+    type ConnectedWallet,
     WalletName,
     createWallet,
     readWallet,
     writeWallet,
 } from '../../wallet/Wallet';
-import { Coin } from '../../utils/type';
+import type { Coin } from '../../utils/type';
 import { osmosis, ibc, getSigningOsmosisClient } from 'osmojs';
 import { tokens, type TokenConfig } from './tokens';
 import { decimal2percent } from '../../utils/format';
-import { StdFee, coin } from '@cosmjs/stargate';
+import type { StdFee } from '@cosmjs/stargate';
 import Long from 'long';
 import { UniClient } from '../../wallet/UniClient';
 
@@ -253,12 +253,12 @@ const outTokens = computed(() => {
     }
 });
 
-function selectInput(v) {
+function selectInput(v: any) {
     swapIn.value = v;
     amountIn.value = '';
 }
 
-function selectOutput(v) {
+function selectOutput(v: any) {
     swapOut.value = v;
     amountIn.value = '';
 }
@@ -269,13 +269,13 @@ const pool = computed(() => {
         .filter(
             (x) =>
                 x.pool_assets?.findIndex(
-                    (a) => a.token.denom === swapIn.value?.ibcDenom
+                    (a: any) => a.token.denom === swapIn.value?.ibcDenom
                 ) > -1
         )
         .filter(
             (x) =>
                 x.pool_assets?.findIndex(
-                    (a) => a.token.denom === swapOut.value?.ibcDenom
+                    (a: any) => a.token.denom === swapOut.value?.ibcDenom
                 ) > -1
         )
         .sort(
@@ -306,10 +306,10 @@ const outAmount = computed(() => {
     const p = pool.value;
     if (p) {
         const tokenBalanceOut = p.pool_assets?.find(
-            (x) => x.token.denom === swapOut.value?.ibcDenom
+            (x:any) => x.token.denom === swapOut.value?.ibcDenom
         );
         const tokenBalanceIn = p.pool_assets?.find(
-            (x) => x.token.denom === swapIn.value?.ibcDenom
+            (x:any) => x.token.denom === swapIn.value?.ibcDenom
         );
         if (tokenBalanceIn && tokenBalanceOut) {
             const balanceOut = Number(tokenBalanceOut.token.amount);
@@ -394,7 +394,7 @@ async function doSwap() {
         } else {
             if (response.rawLog) error.value = response.rawLog;
         }
-    } catch (err) {
+    } catch (err: any) {
         error.value = err;
     }
     sending.value = false;
@@ -492,7 +492,7 @@ async function doDeposit() {
                 });
             }, 6000);
         }
-    } catch (e) {
+    } catch (e: any) {
         sending.value = false;
         error.value = e;
         setTimeout(() => (error.value = ''), 5000);
@@ -548,6 +548,7 @@ async function doWithdraw() {
                 revisionHeight: Long.fromNumber(0),
                 revisionNumber: Long.fromNumber(0),
             },
+            // @ts-ignore
             memo: '',
         });
 
@@ -586,7 +587,7 @@ async function doWithdraw() {
         } else {
             if (response.rawLog) error.value = response.rawLog;
         }
-    } catch (err) {
+    } catch (err: any) {
         error.value = err
     }
 
@@ -621,7 +622,7 @@ async function connect() {
             });
         initData();
         view.value = 'swap'
-    } catch (e) {
+    } catch (e: any) {
         error.value = e.message;
     }
     sending.value = false;

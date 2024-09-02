@@ -20,7 +20,7 @@ export const useBaseStore = defineStore('baseStore', {
         };
     },
     getters: {
-        blocktime(): number {
+        calculateBlockTime(): number | null {
             if (this.earlest && this.latest) {
                 if (
                     this.latest.block?.header?.height !==
@@ -33,7 +33,12 @@ export const useBaseStore = defineStore('baseStore', {
                     return diff / (blocks);
                 }
             }
-            return 6000;
+            return null;
+
+        },
+        blocktime(): number {
+            const blocktime = this.calculateBlockTime;
+            return blocktime ?? 6000;
         },
         blockchain() {
             return useBlockchain();

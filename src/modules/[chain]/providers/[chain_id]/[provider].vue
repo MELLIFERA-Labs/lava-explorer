@@ -2,7 +2,7 @@
 import { Icon } from '@iconify/vue';
 import { onMounted, computed, ref } from 'vue';
 import { useLavaProvidersStore } from '@/stores/useProvidersStore';
-import { useFormatter, useStakingStore } from '@/stores';
+import {useFormatter, useStakingStore, useTxDialog} from '@/stores';
 import ProviderCommsionRate from '@/components/ProviderCommsionRate.vue';
 import dayjs from 'dayjs';
 const props = defineProps(['provider', 'chain', 'chain_id']);
@@ -19,6 +19,7 @@ const staking = useStakingStore();
 const lavaProvidersStore = useLavaProvidersStore();
 import { useRoute } from 'vue-router';
 const route = useRoute();
+const dialog = useTxDialog();
 const copyWebsite = async (url: string) => {
   if (!url) {
     return;
@@ -142,9 +143,9 @@ onMounted(() => {
                 {{ p.description?.identity || '-' }}
               </div>
               <label
-                for="delegate"
+                for="lava_restake"
                 class="btn btn-primary btn-sm w-full"
-                @click=""
+                @click="dialog.open('lava_restake', { provider_address: p.address, chain_id: lavaChainId })"
                 >restake</label
               >
             </div>
@@ -378,10 +379,12 @@ onMounted(() => {
               </td>
               <td class="py-3">
                 <div v-if="true" class="flex">
-                  <label for="delegate" class="btn btn-primary btn-xs mr-2"
+                  <label for="lava_restake" class="btn btn-primary btn-xs mr-2"
+                         @click="dialog.open('lava_restake', { provider_address: p.address, chain_id: p.chain })"
                     >restake</label
                   >
-                  <label for="redelegate" class="btn btn-primary btn-xs mr-2"
+                  <label for="lava_redelegate" class="btn btn-primary btn-xs mr-2"
+                          @click="dialog.open('lava_redelegate', { from_provider: p.address, from_chain_id: p.chain })"
                     >redelagate</label
                   >
                 </div>

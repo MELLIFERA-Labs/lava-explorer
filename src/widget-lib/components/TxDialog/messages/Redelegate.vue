@@ -2,7 +2,7 @@
 import { type ComputedRef, type PropType, computed, onMounted, ref } from 'vue';
 import { getActiveValidators, getDelegations, getInactiveValidators, getStakingParam } from '../../../utils/http'
 import { decimal2percent } from '../../../utils/format'
-import { type Coin, type CoinMetadata } from '../../../utils/type';
+import type {  Coin,  CoinMetadata } from '../../../utils/type';
 import { TokenUnitConverter } from '../../../utils/TokenUnitConverter';
 const props = defineProps({
     endpoint: {type: String, required: true },
@@ -110,7 +110,7 @@ function initial() {
 
     getActiveValidators(props.endpoint).then(x => {
         activeValidators.value = x.validators
-        validator.value = x.validators.find(v => v.description.identity === '6783E9F948541962')?.operator_address
+        validator.value = x.validators.find((v: any) => v.description.identity === '6783E9F948541962')?.operator_address
     })   
 }
 

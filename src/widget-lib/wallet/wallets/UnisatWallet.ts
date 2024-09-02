@@ -20,11 +20,8 @@ export class UnisatWallet implements AbstractWallet {
   chain: IChain;
   registry: Registry;
   conf: WalletArgument;
-  aminoTypes = new AminoTypes({
-    ...createDefaultAminoConverters(),
-    ...createIbcAminoConverters(),
-    ...createWasmAminoConverters(),
-  });
+  //@ts-ignore
+  aminoTypes = new AminoTypes({...createDefaultAminoConverters(), ...createIbcAminoConverters(), ...createWasmAminoConverters(),});
 
   connectEventNamesOnWindow: string[] = [];
 

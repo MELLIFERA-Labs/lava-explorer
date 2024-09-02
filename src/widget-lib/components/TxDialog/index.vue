@@ -34,7 +34,10 @@ import UpdateAdmin from './wasm/UpdateAdmin.vue';
 import ClearAdmin from './wasm/ClearAdmin.vue';
 
 import LavaRestake from './messages/LavaRestake.vue';
-import {coin} from "@cosmjs/stargate";
+import LavaRedelegate from "./messages/LavaRedelegate.vue";
+import LavaRealease from "./messages/LavaRelease.vue";
+import LavaWithdraw from "./messages/LavaWithdraw.vue";
+import LavaDelegate from "./messages/LavaDelegate.vue";
 
 const props = defineProps({
     type: String,
@@ -79,6 +82,14 @@ const msgType = computed(() => {
             return ClearAdmin;
         case 'lava_restake':
           return LavaRestake;
+        case 'lava_redelegate':
+          return LavaRedelegate;
+        case 'lava_release':
+          return LavaRealease;
+        case 'lava_withdraw':
+          return LavaWithdraw;
+        case 'lava_delegate':
+          return LavaDelegate;
         default:
             return Send;
     }
@@ -101,6 +112,7 @@ const msgBox = ref({
     msgs: [],
     isValid: { ok: false, error: '' },
     initial: function () { },
+    noSend: false,
 });
 const feeAmount = ref(2000);
 const feeDenom = ref('');
@@ -115,7 +127,7 @@ async function initData() {
         metadatas.value = {}
         view.value = 'input';
         p.value = JSON.parse(props.params || '{}')
-        memo.value = props.type?.toLowerCase() === 'send' ? '' : 'ping.pub'
+        memo.value = props.type?.toLowerCase() === 'send' ? '' : 'MELLIFERA and ping.pub'
 
         feeAmount.value = Number(p.value?.fees?.amount || 2000)
         feeDenom.value = balance.value[0]?.denom;
@@ -157,7 +169,9 @@ async function initData() {
             });
 
             // Every sub component should have a initial function
-            if (msgBox.value && msgBox.value.initial) msgBox.value.initial();
+            if (msgBox.value && msgBox.value.initial) {
+              msgBox.value.initial()
+            };
             
             // load fee denom
             getStakingParam(props.endpoint).then((res) => {
@@ -312,7 +326,6 @@ function fetchTx(tx: string) {
                 <h3 class="text-lg font-bold capitalize dark:text-gray-300">
                     {{ showTitle() }}
                 </h3>
-
                 <div v-if="!sender" class="text-center h-16 items-center">
                     No wallet connected!
                 </div>
@@ -380,7 +393,7 @@ function fetchTx(tx: string) {
                             </div>
                         </div>
 
-                        <div class="modal-action flex justify-between items-center">
+                        <div v-if="!msgBox?.noSend" class="modal-action flex justify-between items-center">
                             <div class="flex items-center cursor-pointer">
                                 <input v-model="advance" type="checkbox" :id="`${type}-advance`"
                                     class="checkbox checkbox-sm checkbox-primary mr-2" /><label :for="`${type}-advance`"

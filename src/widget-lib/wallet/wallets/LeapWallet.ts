@@ -11,11 +11,14 @@ import { encodeSecp256k1Pubkey, makeSignDoc as makeSignDocAmino } from "@cosmjs/
 import { createWasmAminoConverters } from "@cosmjs/cosmwasm-stargate";
 
 export class LeapWallet implements AbstractWallet {
+    // @ts-ignore
     name: WalletName.Leap
     chainId: string
     registry: Registry
     conf: WalletArgument
+    // @ts-ignore
     signer: OfflineSigner
+    // @ts-ignore
     aminoTypes = new AminoTypes( {...createDefaultAminoConverters(), ...createWasmAminoConverters()})
     constructor(arg: WalletArgument, registry: Registry) {
         this.chainId = arg.chainId || "cosmoshub"
@@ -33,6 +36,7 @@ export class LeapWallet implements AbstractWallet {
 
         // @ts-ignore
         this.signer = await window.leap.getOfflineSigner(this.chainId);
+        // @ts-ignore
         return await this.signer.getAccounts();
     }
     supportCoinType(coinType?: string | undefined): Promise<boolean> {
@@ -113,7 +117,7 @@ export class LeapWallet implements AbstractWallet {
         console.log(signature, 'signature', signed)
 
         const signedTxBody = {
-            messages: signed.msgs.map((msg) => this.aminoTypes.fromAmino(msg)),
+            messages: signed.msgs.map((msg: any) => this.aminoTypes.fromAmino(msg)),
             memo: signed.memo,
         };
         const signedTxBodyEncodeObject: TxBodyEncodeObject = {

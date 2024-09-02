@@ -142,7 +142,6 @@ function loadAccount(address: string) {
       return x;
     })
     .then((x) => {
-      console.log('x', x);
       for (const p of x.delegations) {
         if (userProviders.value[p.provider]) {
           continue;
@@ -414,10 +413,16 @@ function mapAmount(
             >{{ $t('account.btn_delegate') }}</label
           >
           <label
+              for="lava_delegate"
+              class="btn btn-primary btn-sm mr-2"
+              @click="dialog.open('lava_delegate', {}, updateEvent)"
+          >delegate & restake</label
+          >
+          <label
             for="withdraw"
             class="btn btn-primary btn-sm"
             @click="dialog.open('withdraw', {}, updateEvent)"
-            >{{ $t('account.btn_withdraw') }}</label
+            >withdraw validators reward</label
           >
         </div>
       </div>
@@ -581,26 +586,46 @@ function mapAmount(
         </table>
       </div>
     </div>
-    <div v-if="availableForRestakeProvider?.amount" class="bg-base-100 px-4 pt-3 pb-4 rounded mb-4 shadow">
-      <div class="flex justify-between">
-        <h3 class="card-title">Available for restake: <span class="text-primary">{{ format.formatToken(availableForRestakeProvider.amount, true, '0,0.[000]') }} </span></h3>
-        <div class="flex justify-end">
-          <label for="lava_restake" class="btn btn-primary btn-sm"  @click="dialog.open('lava_restake', {}, updateEvent)"
-            >Restake</label
-          >
+    <div class="bg-base-100 px-6 pt-4 pb-5 rounded-lg mb-6 shadow-md">
+      <div class="flex justify-between items-start">
+        <div>
+          <h3 class="card-title text-lg font-semibold">
+            Available for restake:
+            <span class="text-primary">
+          {{ availableForRestakeProvider?.amount ? format.formatToken(availableForRestakeProvider.amount, true, '0,0.[000]') : `0 LAVA` }}
+        </span>
+          </h3>
+          <p class="text-sm text-gray-500 mt-1">
+            (Also known as "empty provider")
+          </p>
+          <!-- Noticeable highlighted section -->
+          <div class="p-4 mt-2 border border-gray-700 rounded-md bg-gray-800">
+            <p class="text-sm text-gray-300">
+              To increase your restake balance ("Available for restake"), delegate to one or more validators. Once your balance is increased, you can delegate to the provider.
+            </p>
+            <p class="text-sm text-gray-300 mt-2">
+              If you need to unbond tokens, first "release" them from the provider to increase your restake balance. Then, you can unbond tokens from the validator, which will also reduce both your validator and restake balances. If your restaking balance is less than the amount you wish to unbond, the unbonding will proceed uniformly across all your providers.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center">
+          <label for="lava_restake" class="btn btn-primary btn-sm" @click="dialog.open('lava_restake', {}, updateEvent)">
+            Restake
+          </label>
         </div>
       </div>
     </div>
+
     <!-- Provider delegations  -->
     <div v-if="delegationProviders?.delegations?.length" class="bg-base-100 px-4 pt-3 pb-4 rounded mb-4 shadow">
       <div class="flex justify-between">
         <h2 class="card-title mb-4">Provider delegations</h2>
         <div class="flex justify-end mb-4">
           <label
-            for="withdraw"
+            for="lava_withdraw"
             class="btn btn-primary btn-sm"
-            @click="dialog.open('withdraw', {}, updateEvent)"
-            >Withdraw rewards from Provider</label
+            @click="dialog.open('lava_withdraw', {}, updateEvent)"
+            >Withdraw providers reward</label
           >
         </div>
       </div>
@@ -655,13 +680,16 @@ function mapAmount(
               <td class="py-3">
                 <div class="flex justify-end">
                   <label
-                    for="restake "
+                    for="lava_restake"
                     class="btn btn-primary btn-xs mr-2"
-                    @click=""
+                    @click="dialog.open('lava_restake', { provider_address: p.provider, chain_id: p.chainID }, updateEvent)"
                     >restake</label
                   >
-                  <label for="unbond" class="btn btn-primary btn-xs" @click=""
+                  <label for="lava_redelegate" class="btn btn-primary btn-xs mr-2" @click="dialog.open('lava_redelegate', {from_provider: p.provider, from_chain_id: p.chainID}, updateEvent)"
                     >redelegate</label
+                  >
+                  <label for="lava_release" class="btn btn-primary btn-xs" @click="dialog.open('lava_release', {from_provider: p.provider, from_chain_id: p.chainID}, updateEvent)"
+                  >release</label
                   >
                 </div>
               </td>

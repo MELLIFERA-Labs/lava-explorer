@@ -1,14 +1,17 @@
-import { EncodeObject } from "@cosmjs/proto-signing"
-import { 
-    createMsgWithdrawDelegatorReward, 
-    createIBCMsgTransfer,
-    createMsgSend,
-    createMsgBeginRedelegate,
-    createMsgDelegate,
-    createMsgUndelegate,
-    createMsgVote,
-    // createMsgWithdrawValidatorCommission,
-} from '@tharsis/proto'
+import type { EncodeObject } from "@cosmjs/proto-signing"
+import * as thProto from '@tharsis/proto'
+
+const createMsgWithdrawDelegatorReward = thProto.createMsgWithdrawDelegatorReward;
+const createIBCMsgTransfer = thProto.createIBCMsgTransfer;
+const createMsgSend = thProto.createMsgSend;
+const createMsgBeginRedelegate = thProto.createMsgBeginRedelegate;
+const createMsgDelegate = thProto.createMsgDelegate;
+const createMsgUndelegate = thProto.createMsgUndelegate;
+const createMsgVote = thProto.createMsgVote;
+
+
+
+
 import {
     MSG_WITHDRAW_DELEGATOR_REWARD_TYPES,
     MSG_BEGIN_REDELEGATE_TYPES,

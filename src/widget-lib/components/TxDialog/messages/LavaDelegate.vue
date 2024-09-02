@@ -1,9 +1,16 @@
 <script lang="ts" setup>
 import {computed, type ComputedRef, type PropType, ref, watch} from 'vue';
-import {getDelegatorProviders, getProviders, getSpecs, getStakingParam} from '../../../utils/http';
+import {
+  getActiveValidators,
+  getInactiveValidators,
+  getProviders,
+  getSpecs,
+  getStakingParam
+} from '../../../utils/http';
 import type {Coin, CoinMetadata} from '../../../utils/type';
 import {TokenUnitConverter} from '../../../utils/TokenUnitConverter';
 import {useRouter} from 'vue-router';
+import {decimal2percent} from "@/widget-lib/utils/format";
 const router = useRouter();
 const props = defineProps({
   endpoint: { type: String, required: true },
@@ -13,30 +20,31 @@ const props = defineProps({
   params: String,
 });
 const params = computed(() => JSON.parse(props.params || '{}'));
-const setIsLavaWarning = ref(false);
+
+const validator = ref('');
+
+const activeValidators = ref([]);
+const inactiveValidators = ref([]);
+
 const provider = ref('');
 const specChainId = ref('');
 
 const providers = ref([] as any[]);
 const specs = ref([] as any[]);
-const inactiveValidators = ref([]);
 const stakingDenom = ref('');
 const unbondingTime = ref('');
 const amount = ref('');
 const amountDenom = ref('');
-const userProviders = ref([]);
-const isLavaWarning = computed(() => setIsLavaWarning.value);
 const msgs = computed(() => {
   const convert = new TokenUnitConverter(props.metadata);
   return [
     {
-      typeUrl: '/lavanet.lava.dualstaking.MsgRedelegate',
+      typeUrl: '/lavanet.lava.dualstaking.MsgDelegate',
       value: {
         creator: props.sender,
-        fromProvider: 'empty_provider',
-        toProvider: provider.value,
-        fromChainID: "*",
-        toChainID: specChainId.value,
+        validator: validator.value,
+        provider: provider.value,
+        chainID: specChainId.value,
         amount: convert.displayToBase(stakingDenom.value, {
           amount: String(amount.value),
           denom: amountDenom.value,
@@ -45,7 +53,21 @@ const msgs = computed(() => {
     },
   ];
 });
-
+const listValidator: ComputedRef<
+    {
+      operator_address: string;
+      description: { moniker: string };
+      commission: { commission_rates: { rate: string } };
+      status: string;
+    }[]
+> = computed(() => {
+  return [...activeValidators.value, ...inactiveValidators.value];
+});
+function loadInactiveValidators() {
+  getInactiveValidators(props.endpoint).then((x) => {
+    inactiveValidators.value = x.validators;
+  });
+}
 const list: ComputedRef<
     {
       operator_address: string;
@@ -59,11 +81,9 @@ const list: ComputedRef<
 
 const available = computed(() => {
   const convert = new TokenUnitConverter(props.metadata);
-  // Handle case where userProviders is not yet populated
-  const emptyProvider = userProviders.value?.find(
-      (x: any) => x.provider === 'empty_provider'
-  ) as any | undefined;
-  const base = emptyProvider?.amount || { amount: '0', denom: stakingDenom.value }
+  const base = props.balances?.find(
+      (x) => x.denom === stakingDenom.value
+  ) || { amount: '0', denom: stakingDenom.value };
   return {
     base,
     display: convert.baseToUnit(base, amountDenom.value),
@@ -86,6 +106,10 @@ const units = computed(() => {
 const isValid = computed(() => {
   let ok = true;
   let error = '';
+  if (!validator.value) {
+    ok = false;
+    error = 'Validator is empty';
+  }
   if(!specChainId.value) {
     ok = false;
     error = 'Chain ID is empty';
@@ -109,11 +133,9 @@ function matchMoniker(p: any) {
       || p?.moniker?.trim()?.toLowerCase()?.includes('mellifera');
 }
 function fetchProviders(chainID: string) {
-   getProviders(props.endpoint, chainID).then((x) => {
+  getProviders(props.endpoint, chainID).then((x) => {
     providers.value = x.stakeEntry;
-    if(!params.value.provider_address) {
-      provider.value = x.stakeEntry.find(matchMoniker)?.address || '';
-    }
+    provider.value = x.stakeEntry.find(matchMoniker)?.address;
   });
 }
 watch(specChainId, (current,prev) => {
@@ -132,16 +154,13 @@ function initial() {
   providers.value = [];
   provider.value = params.value.provider_address;
   specChainId.value = params.value.chain_id;
-  getDelegatorProviders(props.endpoint, props.sender).then((x) => {
-    const emptyProvider = x.delegations.find(
-        (x: any) => x.provider === 'empty_provider'
-    );
-    if(!emptyProvider) {
-      setIsLavaWarning.value = true;
-    } else {
-      setIsLavaWarning.value = false;
+  getActiveValidators(props.endpoint).then((x) => {
+    activeValidators.value = x.validators;
+    if (!params.value.validator_address) {
+      validator.value = x.validators.find(
+          (v: any) => v.description.moniker.trim().toLowerCase().includes('mellifera')
+      )?.operator_address;
     }
-    userProviders.value = x.delegations;
   });
   if(specChainId.value){
     fetchProviders(specChainId.value);
@@ -154,31 +173,11 @@ function initial() {
     specs.value = x.chainInfoList;
   });
 }
-function reloadPage() {
-  console.log('reloadPage')
 
-  window.location.href = router.resolve({name: 'chain-staking'}).href;
-}
-defineExpose({ msgs, isValid, initial, noSend: isLavaWarning });
+defineExpose({ msgs, isValid, initial });
 </script>
 <template>
-  <div v-if="isLavaWarning">
-    <div class="mt-5 p-4 border-l-4 border-yellow-400 bg-yellow-50 text-yellow-700 rounded shadow-lg">
-      <div class="flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" aria-label="Warning" class="h-6 w-6 mr-3 text-yellow-700" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm0 20.4c-.883 0-1.6-.717-1.6-1.6s.717-1.6 1.6-1.6 1.6.717 1.6 1.6-.717 1.6-1.6 1.6zm1.6-5.6h-3.2V6.4h3.2V14.8z"/>
-        </svg>
-        <span class="flex-grow" >
-        To proceed with restaking, please delegate to one or more
-            <a class="underline font-semibold text-blue-600 hover:text-blue-800 cursor-pointer" @click="reloadPage" >validators</a>
-      </span>
-      </div>
-      <blockquote class="mt-2 pl-4 border-l-2 border-gray-300 text-sm text-gray-600">
-        By delegating, you help secure the network and earn rewards from validator. Once delegated, you can restake this balance to provider(s), improving network performance and earning rewards from provider(s).
-      </blockquote>
-    </div>
-  </div>
-  <div v-else>
+  <div>
     <div class="form-control">
       <label class="label">
         <span class="label-text">Sender</span>
@@ -188,6 +187,23 @@ defineExpose({ msgs, isValid, initial, noSend: isLavaWarning });
           type="text"
           class="text-gray-600 dark:text-white input border !border-gray-300 dark:!border-gray-600"
       />
+    </div>
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">Validator</span>
+        <a class="label-text" @click="loadInactiveValidators()"
+        >Show Inactive</a
+        >
+      </label>
+      <select v-model="validator" class="select select-bordered dark:text-white">
+        <option value="">Select a validator</option>
+        <option v-for="v in listValidator" :value="v.operator_address">
+          {{ v.description.moniker }} ({{
+            decimal2percent(v.commission.commission_rates.rate)
+          }}%)
+          <span v-if="v.status !== 'BOND_STATUS_BONDED'">x</span>
+        </option>
+      </select>
     </div>
     <div class="form-control">
       <label class="label">

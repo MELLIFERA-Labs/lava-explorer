@@ -3,11 +3,11 @@ import { defaultRegistryTypes } from "@cosmjs/stargate";
 import type { Transaction } from "../utils/type";
 import { KeplerWallet } from './wallets/KeplerWallet';
 import { LedgerWallet } from './wallets/LedgerWallet';
-import { MetamaskWallet } from './wallets/MetamaskWallet';
-import { MetamaskSnapWallet } from './wallets/MetamaskSnapWallet';
-import { LeapWallet } from './wallets/LeapWallet';
-import { OKXWallet } from "./wallets/OKXWallet";
-import { UnisatWallet } from "./wallets/UnisatWallet";
+// import { MetamaskWallet } from './wallets/MetamaskWallet';
+// import { MetamaskSnapWallet } from './wallets/MetamaskSnapWallet';
+// import { LeapWallet } from './wallets/LeapWallet';
+// import { OKXWallet } from "./wallets/OKXWallet";
+// import { UnisatWallet } from "./wallets/UnisatWallet";
 
 export enum WalletName {
     Keplr = "Keplr",
@@ -105,24 +105,25 @@ export function extractChainId(chainId: string) {
 }
 
 export function createWallet(name: WalletName, arg: WalletArgument, registry?: Registry, chain?: IChain,): AbstractWallet {
+    //@ts-ignore
     const reg = registry || new Registry(defaultRegistryTypes)
     switch (name) {
-        case WalletName.OKX:
-            return new OKXWallet(arg, <IChain>chain, reg);
-        case WalletName.Unisat:
-            return new UnisatWallet(arg, <IChain>chain, reg);
+        // case WalletName.OKX:
+        //     return new OKXWallet(arg, <IChain>chain, reg);
+        // case WalletName.Unisat:
+        //     return new UnisatWallet(arg, <IChain>chain, reg);
         case WalletName.Keplr:
             return new KeplerWallet(arg, reg)
         case WalletName.Ledger:
             return new LedgerWallet(arg, reg)
-        case WalletName.Leap:
-            return new LeapWallet(arg, reg)
-        case WalletName.MetamaskSnap:
-            return new MetamaskSnapWallet(arg, reg)
-        case WalletName.Metamask:
-            return arg.hdPath && 
-            (arg.hdPath.startsWith('m/44/60') || arg.hdPath.startsWith("m/44'/60")) 
-            ? new MetamaskWallet(arg, reg) : new MetamaskSnapWallet(arg, reg)
+        // case WalletName.Leap:
+        //     return new LeapWallet(arg, reg)
+        // case WalletName.MetamaskSnap:
+        //     return new MetamaskSnapWallet(arg, reg)
+        // case WalletName.Metamask:
+        //     return arg.hdPath &&
+        //     (arg.hdPath.startsWith('m/44/60') || arg.hdPath.startsWith("m/44'/60"))
+        //     ? new MetamaskWallet(arg, reg) : new MetamaskSnapWallet(arg, reg)
     }
     throw new Error("No wallet connected")
 }

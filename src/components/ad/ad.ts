@@ -1,5 +1,5 @@
-import { PersonaAdSDK } from '@personaxyz/ad-sdk';
-
+import * as AdSDK  from '@personaxyz/ad-sdk';
+const  PersonaAdSDK  = AdSDK.PersonaAdSDK;
 interface ADConfig {
     apiKey: string;
     environment: string;

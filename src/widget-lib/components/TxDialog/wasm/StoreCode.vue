@@ -13,7 +13,7 @@ const addresses = ref("")
 const permission = ref('3')
 const zip = ref('gzip')
 
-function loadWasm(event) {
+function loadWasm(event: any) {
     const file =  event.target.files[0]
     if(file) {
         var reader = new FileReader();    
