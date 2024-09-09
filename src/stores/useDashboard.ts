@@ -96,6 +96,7 @@ export interface ChainConfig {
     prettyName: string,
     logo: string,
   }>
+  disabled_specs?: string[];
 }
 
 export interface LocalConfig {
@@ -138,7 +139,8 @@ export interface LocalConfig {
   lava_specs_meta?: Record<string, {
         prettyName: string,
         logo: string,
-  }>
+  }>;
+  disabled_specs?: string[];
 }
 
 function apiConverter(api: any[]) {
@@ -199,6 +201,7 @@ export function fromLocal(lc: LocalConfig): ChainConfig {
   conf.themeColor = lc.theme_color;
   conf.faucet = lc.faucet;
   conf.lava_specs_meta = lc.lava_specs_meta;
+  conf.disabled_specs = lc.disabled_specs;
   return conf;
 }
 

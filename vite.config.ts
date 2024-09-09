@@ -58,14 +58,12 @@ export default defineConfig({
     }),
     DefineOptions(),
       process.env.NODE_ENV !== 'production' && inject({ Buffer: ['buffer', 'Buffer'] }),
-    {...nodePolyfills(), enforce: 'post'},
+    {...nodePolyfills(), enforce: 'post'}
   ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
   build: {
+    rollupOptions: {
+      external: ['regex'],
+    },
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -76,6 +74,12 @@ export default defineConfig({
     },
     commonjsOptions: {
       transformMixedEsModules: true,
+    },
+  },
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'regex': './node_modules/regex/dist/regex.min.js'
     },
   },
   optimizeDeps: {

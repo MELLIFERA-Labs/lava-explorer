@@ -39,9 +39,15 @@ export const useLavaSpecStore = defineStore('specStore', {
             const specsMeta = await this.dashboard.chains[this.blockchain.chainName].lava_specs_meta;
             return attachMeta(enabledSpecs, specsMeta);
         },
-        async getLavaSupportedChains() {
+        async getLavaSupportedChains({enabled = true}: { enabled?: boolean } = {}) {
+
             const supportedChains = await this.blockchain.rpc?.getLavaSupportedChains();
             const specsMeta = await this.dashboard.chains[this.blockchain.chainName].lava_specs_meta;
+            // todo: filter by enabled field when Lava supports for show_all_chains query
+            if(!enabled) {
+                const filteredChains = supportedChains.chainInfoList.filter((chain: any) => !this.dashboard.chains[this.blockchain.chainName]?.disabled_specs?.includes(chain.chainID));
+                return attachMeta(filteredChains, specsMeta);
+            }
             return attachMeta(supportedChains.chainInfoList, specsMeta);
         },
         async getLavaSpecByChainID(chainID: string) {

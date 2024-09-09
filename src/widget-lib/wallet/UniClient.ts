@@ -1,22 +1,17 @@
-import { toBase64, fromBase64, toHex, fromBech32 } from "@cosmjs/encoding";
-import { type EncodeObject, encodePubkey, Registry } from '@cosmjs/proto-signing'
-import { encodeSecp256k1Pubkey } from "@cosmjs/amino";
+import { toBase64 } from "@cosmjs/encoding";
+import {  Registry } from '@cosmjs/proto-signing'
 import { defaultRegistryTypes } from "@cosmjs/stargate";
 import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
 import { type AbstractWallet, type WalletArgument, WalletName, createWallet } from "./Wallet"
 import {lavanetProtoRegistry} from '@lavanet/lavajs/dist/codegen/lavanet/client'
 import { post } from "../utils/http";
 import { BroadcastMode, type Transaction, type TxResponse } from "../utils/type";
 import { wasmTypes } from "@cosmjs/cosmwasm-stargate/build/modules";
-import { makeAuthInfoBytes, makeSignDoc, type TxBodyEncodeObject } from "@cosmjs/proto-signing/build";
+import { makeAuthInfoBytes, type TxBodyEncodeObject } from "@cosmjs/proto-signing/build";
 import * as ProtoAny from "cosmjs-types/google/protobuf/any";
 import * as ProtoTxRaw from "cosmjs-types/cosmos/tx/v1beta1/tx";
 const TxRawV = ProtoTxRaw.TxRaw;
 const AnyV = ProtoAny.Any;
-export function isEthermint(chainId: string) {
-  return chainId.search(/\w+_\d+-\d+/g) > -1
-}
 
 export class UniClient {
     registry: Registry

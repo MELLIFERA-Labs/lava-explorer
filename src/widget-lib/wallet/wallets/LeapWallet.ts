@@ -1,5 +1,5 @@
 import { fromBase64, fromBech32, toHex } from "@cosmjs/encoding";
-import { type OfflineSigner, Registry, type TxBodyEncodeObject, encodePubkey, makeAuthInfoBytes, makeSignDoc } from "@cosmjs/proto-signing"
+import { type OfflineSigner, Registry, type TxBodyEncodeObject, makeAuthInfoBytes, makeSignDoc } from "@cosmjs/proto-signing"
 import { type AbstractWallet, type Account, type WalletArgument, WalletName, keyType } from "../Wallet"
 import type { Transaction } from "../../utils/type"
 import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
@@ -7,7 +7,8 @@ import { Any } from "cosmjs-types/google/protobuf/any";
 import { PubKey } from 'cosmjs-types/cosmos/crypto/secp256k1/keys'
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
 import { AminoTypes, createDefaultAminoConverters } from "@cosmjs/stargate";
-import { encodeSecp256k1Pubkey, makeSignDoc as makeSignDocAmino } from "@cosmjs/amino";
+import {lavanetAminoConverters} from '@lavanet/lavajs/dist/codegen/lavanet/client'
+import { makeSignDoc as makeSignDocAmino } from "@cosmjs/amino";
 import { createWasmAminoConverters } from "@cosmjs/cosmwasm-stargate";
 
 export class LeapWallet implements AbstractWallet {
@@ -19,7 +20,7 @@ export class LeapWallet implements AbstractWallet {
     // @ts-ignore
     signer: OfflineSigner
     // @ts-ignore
-    aminoTypes = new AminoTypes( {...createDefaultAminoConverters(), ...createWasmAminoConverters()})
+    aminoTypes = new AminoTypes( {...createDefaultAminoConverters(), ...createWasmAminoConverters(), ...lavanetAminoConverters})
     constructor(arg: WalletArgument, registry: Registry) {
         this.chainId = arg.chainId || "cosmoshub"
         // @ts-ignore

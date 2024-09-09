@@ -28,7 +28,7 @@ const favoriteSpecs = computed(() => {
   return supportedChains.value.filter((x: any) => dashboardStore.favoriteProviderSpecMap[x.chainID])
 })
 onMounted(() => {
-  lavaSpecStore.getLavaSupportedChains().then((specs) => {
+  lavaSpecStore.getLavaSupportedChains({enabled: false}).then((specs) => {
     supportedChains.value = specs
   })
 })

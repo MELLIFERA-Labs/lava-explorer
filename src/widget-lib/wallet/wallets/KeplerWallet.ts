@@ -1,5 +1,5 @@
 import { fromBase64, fromBech32, toHex } from "@cosmjs/encoding";
-import { Registry, type TxBodyEncodeObject, encodePubkey, makeAuthInfoBytes, makeSignDoc } from "@cosmjs/proto-signing"
+import { Registry, type TxBodyEncodeObject, makeAuthInfoBytes, makeSignDoc } from "@cosmjs/proto-signing"
 import { type AbstractWallet, type  Account, type WalletArgument, WalletName, keyType } from "../Wallet"
 import type { Transaction } from "../../utils/type"
 import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";;

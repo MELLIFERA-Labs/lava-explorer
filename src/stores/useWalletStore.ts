@@ -118,7 +118,6 @@ export const useWalletStore = defineStore('walletStore', {
     loadLavaAsset() {
       if (!this.currentAddress) return;
        this.blockchain.rpc.getRewardsFromProvider(this.currentAddress).then((x) => {
-         console.log('provv231231231-=.',x)
         this.providerRewards = x;
       });
        this.blockchain.rpc.delegatorProviders(this.currentAddress).then((x:any) => {

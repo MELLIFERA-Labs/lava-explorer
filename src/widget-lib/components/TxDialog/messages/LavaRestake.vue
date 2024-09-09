@@ -155,7 +155,6 @@ function initial() {
   });
 }
 function reloadPage() {
-  console.log('reloadPage')
 
   window.location.href = router.resolve({name: 'chain-staking'}).href;
 }

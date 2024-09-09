@@ -3,6 +3,7 @@ import { defaultRegistryTypes } from "@cosmjs/stargate";
 import type { Transaction } from "../utils/type";
 import { KeplerWallet } from './wallets/KeplerWallet';
 import { LedgerWallet } from './wallets/LedgerWallet';
+import {LeapWallet} from "@/widget-lib/wallet/wallets/LeapWallet";
 // import { MetamaskWallet } from './wallets/MetamaskWallet';
 // import { MetamaskSnapWallet } from './wallets/MetamaskSnapWallet';
 // import { LeapWallet } from './wallets/LeapWallet';
@@ -116,8 +117,8 @@ export function createWallet(name: WalletName, arg: WalletArgument, registry?: R
             return new KeplerWallet(arg, reg)
         case WalletName.Ledger:
             return new LedgerWallet(arg, reg)
-        // case WalletName.Leap:
-        //     return new LeapWallet(arg, reg)
+        case WalletName.Leap:
+            return new LeapWallet(arg, reg)
         // case WalletName.MetamaskSnap:
         //     return new MetamaskSnapWallet(arg, reg)
         // case WalletName.Metamask:

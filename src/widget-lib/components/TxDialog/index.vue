@@ -197,7 +197,6 @@ async function sendTx() {
 
         const acc = await getAccount(props.endpoint, props.sender);
         const messages = msgBox.value.msgs;
-        console.log('here')
         const tx = {
             chainId: chainId.value,
             signerAddress: props.sender,
@@ -228,7 +227,6 @@ async function sendTx() {
                 chainId: chainId.value,
             },
         };
-        // console.log('tx:', tx);
         const current = readWallet(props.hdPath);
         const wallet = current ? current.wallet : WalletName.Keplr;
         const client = new UniClient(wallet, {
@@ -243,7 +241,7 @@ async function sendTx() {
             }).catch(() => {
                 // sending.value = false;
                 // error.value = "Failed to simulate tx gas: " + err;
-                advance.value = true;
+                // advance.value = true;
             })
         } else {
             tx.fee.gas = gasInfo.value.toString()
@@ -399,7 +397,7 @@ function fetchTx(tx: string) {
                                     class="checkbox checkbox-sm checkbox-primary mr-2" /><label :for="`${type}-advance`"
                                     class="cursor-pointer dark:text-gray-400">Advance</label>
                             </div>
-                            <button class="btn btn-primary" @click="sendTx()" :disabled="sending">
+                            <button class="btn btn-primary" @click.prevent="sendTx()" :disabled="sending">
                                 <span v-if="sending" class="loading loading-spinner"></span>
                                 Send
                             </button>
