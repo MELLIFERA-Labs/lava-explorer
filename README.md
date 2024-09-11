@@ -31,7 +31,7 @@ You can do LAVA operations like restaking, redelegating, and more using this das
 
 ### How to use it:
 
-
+https://github.com/user-attachments/assets/33b9499c-d294-4bc3-9ee5-282d6b6d5a34
 
 ### Support me and this project: 
 
