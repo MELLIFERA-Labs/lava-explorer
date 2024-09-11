@@ -13,7 +13,10 @@
 
 This is a fork of the original [ping.pub](https://github.com/ping-pub/ping.pub) explorer with LAVA features support.
 
-You can do LAVA operations like restaking, redelegating, and more using this dashboard with support `Keplr`, `Leap` and `Ledger` wallets.
+You can do LAVA operations like restaking, redelegating, and more using this dashboard with wallets support:
+ - **Keplr**
+ - **Leap** 
+ - **Ledger**
 
 > ⚠️ **Important Notice:**
 >
@@ -24,7 +27,7 @@ You can do LAVA operations like restaking, redelegating, and more using this das
 ### What was done: 
 - Added Providers view for LAVA  
 - Added dualstaking features 
-- Moved the latest ping.pub widgets (wallet operations) to one repo to increase code transparency
+- Moved the latest [ping.pub widgets](https://github.com/ping-pub/widget) (wallet operations) to one repo to increase code transparency
 
 ### How to use it:
 
