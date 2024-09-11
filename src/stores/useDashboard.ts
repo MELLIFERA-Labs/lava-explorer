@@ -92,6 +92,11 @@ export interface ChainConfig {
     address_limit: number,
     fees: string
   };
+  lava_specs_meta?: Record<string, {
+    prettyName: string,
+    logo: string,
+  }>
+  disabled_specs?: string[];
 }
 
 export interface LocalConfig {
@@ -131,6 +136,11 @@ export interface LocalConfig {
     address_limit: number,
     fees: string
   };
+  lava_specs_meta?: Record<string, {
+        prettyName: string,
+        logo: string,
+  }>;
+  disabled_specs?: string[];
 }
 
 function apiConverter(api: any[]) {
@@ -190,6 +200,8 @@ export function fromLocal(lc: LocalConfig): ChainConfig {
   conf.keplrPriceStep = lc.keplr_price_step;
   conf.themeColor = lc.theme_color;
   conf.faucet = lc.faucet;
+  conf.lava_specs_meta = lc.lava_specs_meta;
+  conf.disabled_specs = lc.disabled_specs;
   return conf;
 }
 
@@ -280,11 +292,15 @@ export const useDashboard = defineStore('dashboard', {
       localStorage.getItem('favoriteMap') ||
         '{"cosmos":true, "osmosis":true}'
     );
+    const favoriteProviderSpecMap = JSON.parse(
+        localStorage.getItem('favoriteProviderSpecMap') || '{}'
+    ) as Record<string, boolean>;
     return {
       status: LoadingStatus.Empty,
       source: ConfigSource.MainnetCosmosDirectory,
       networkType: NetworkType.Mainnet,
       favoriteMap: favMap as Record<string, boolean>,
+      favoriteProviderSpecMap,
       chains: {} as Record<string, ChainConfig>,
       prices: {} as Record<string, any>,
       coingecko: {} as Record<string, {coinId: string, exponent: number, symbol: string}>,

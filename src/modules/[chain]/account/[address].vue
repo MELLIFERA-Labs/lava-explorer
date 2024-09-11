@@ -37,6 +37,11 @@ const recentReceived = ref([] as TxResponse[]);
 const unbonding = ref([] as UnbondingResponses[]);
 const unbondingTotal = ref(0);
 const chart = {};
+const delegationProviders = ref([] as any);
+const rewardsFromProvider = ref([] as any);
+const userProviders = ref({} as any);
+const availableForRestakeProvider = ref({} as any);
+
 onMounted(() => {
   loadAccount(props.address);
 });
@@ -81,12 +86,14 @@ const totalValue = computed(() => {
   });
   unbonding.value?.forEach((x) => {
     x.entries?.forEach((y) => {
-      value += format.tokenValueNumber({amount: y.balance, denom: stakingStore.params.bond_denom});
+      value += format.tokenValueNumber({
+        amount: y.balance,
+        denom: stakingStore.params.bond_denom,
+      });
     });
   });
   return format.formatNumber(value, '0,0.00');
 });
-
 
 function loadAccount(address: string) {
   blockchain.rpc.getAuthAccount(address).then((x) => {
@@ -113,21 +120,69 @@ function loadAccount(address: string) {
     });
   });
 
-  const receivedQuery =  `?&pagination.reverse=true&events=coin_received.receiver='${address}'&pagination.limit=5`;
+  const receivedQuery = `?&pagination.reverse=true&events=coin_received.receiver='${address}'&pagination.limit=5`;
   blockchain.rpc.getTxs(receivedQuery, {}).then((x) => {
     recentReceived.value = x.tx_responses;
   });
+  blockchain.rpc.getRewardsFromProvider(address).then((x) => {
+    rewardsFromProvider.value = x;
+  });
+  blockchain.rpc
+    .delegatorProviders(address)
+    .then((x) => {
+      availableForRestakeProvider.value = x.delegations.find(
+        (p: { provider: string }) => p.provider === 'empty_provider'
+      );
+      const allProviders = x.delegations.filter(
+        (p: { provider: string }) => p.provider !== 'empty_provider'
+      );
+      delegationProviders.value = {
+        delegations: allProviders,
+      };
+      return x;
+    })
+    .then((x) => {
+      for (const p of x.delegations) {
+        if (userProviders.value[p.provider]) {
+          continue;
+        }
+        blockchain.rpc.getProviderChains(p.provider).then((providers) => {
+          const providerWithMoniker = providers.stakeEntries.find(
+            (p: { moniker: string; description: { moniker: string } }) =>
+              p?.moniker?.length ?? p?.description?.moniker?.length
+          );
+          if (!providerWithMoniker) {
+            userProviders.value = {
+              ...userProviders.value,
+              [p.provider]: {},
+            };
+            return;
+          }
+          userProviders.value = {
+            ...userProviders.value,
+            [p.provider]: providerWithMoniker,
+          };
+        });
+      }
+    });
 }
-
+const getProviderName = (address: string) => {
+  return userProviders.value[address]?.moniker ?? address;
+};
 function updateEvent() {
   loadAccount(props.address);
 }
 
-function mapAmount(events:{type: string, attributes: {key: string, value: string}[]}[]) {
-  if(!events) return []
-  return events.find(x => x.type==='coin_received')?.attributes
-    .filter(x => x.key === 'YW1vdW50'|| x.key === `amount`)
-    .map(x => x.key==='amount'? x.value : String.fromCharCode(...fromBase64(x.value)))
+function mapAmount(
+  events: { type: string; attributes: { key: string; value: string }[] }[]
+) {
+  if (!events) return [];
+  return events
+    .find((x) => x.type === 'coin_received')
+    ?.attributes.filter((x) => x.key === 'YW1vdW50' || x.key === `amount`)
+    .map((x) =>
+      x.key === 'amount' ? x.value : String.fromCharCode(...fromBase64(x.value))
+    );
 }
 </script>
 <template>
@@ -164,33 +219,33 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
         <h2 class="card-title mb-4">{{ $t('account.assets') }}</h2>
         <!-- button -->
         <div class="flex justify-end mb-4 pr-5">
-            <label
-              for="send"
-              class="btn btn-primary btn-sm mr-2"
-              @click="dialog.open('send', {}, updateEvent)"
-              >{{ $t('account.btn_send') }}</label
-            >
-            <label
-              for="transfer"
-              class="btn btn-primary btn-sm"
-              @click="
-                dialog.open(
-                  'transfer',
-                  {
-                    chain_name: blockchain.current?.prettyName,
-                  },
-                  updateEvent
-                )
-              "
-              >{{ $t('account.btn_transfer') }}</label
-            >
-          </div>
+          <label
+            for="send"
+            class="btn btn-primary btn-sm mr-2"
+            @click="dialog.open('send', {}, updateEvent)"
+            >{{ $t('account.btn_send') }}</label
+          >
+          <label
+            for="transfer"
+            class="btn btn-primary btn-sm"
+            @click="
+              dialog.open(
+                'transfer',
+                {
+                  chain_name: blockchain.current?.prettyName,
+                },
+                updateEvent
+              )
+            "
+            >{{ $t('account.btn_transfer') }}</label
+          >
+        </div>
       </div>
       <div class="grid md:!grid-cols-3">
         <div class="md:!col-span-1">
           <DonutChart :series="totalAmountByCategory" :labels="labels" />
         </div>
-        <div class="mt-4 md:!col-span-2 md:!mt-0 md:!ml-4">          
+        <div class="mt-4 md:!col-span-2 md:!mt-0 md:!ml-4">
           <!-- list-->
           <div class="">
             <!--balances  -->
@@ -221,7 +276,7 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
                 <span
                   class="inset-x-0 inset-y-0 opacity-10 absolute bg-primary dark:invert text-sm"
                 ></span>
-                ${{ format.tokenValue(balanceItem) }}                
+                ${{ format.tokenValue(balanceItem) }}
               </div>
             </div>
             <!--delegations  -->
@@ -257,7 +312,7 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
                 <span
                   class="inset-x-0 inset-y-0 opacity-10 absolute bg-primary dark:invert text-sm"
                 ></span>
-                ${{ format.tokenValue(delegationItem?.balance) }}                
+                ${{ format.tokenValue(delegationItem?.balance) }}
               </div>
             </div>
             <!-- rewards.total -->
@@ -282,15 +337,17 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
                 <div class="text-sm font-semibold">
                   {{ format.formatToken(rewardItem) }}
                 </div>
-                <div class="text-xs">{{ format.calculatePercent(rewardItem.amount, totalAmount) }}</div>
+                <div class="text-xs">
+                  {{ format.calculatePercent(rewardItem.amount, totalAmount) }}
+                </div>
               </div>
               <div
                 class="text-xs truncate relative py-1 px-3 rounded-full w-fit text-primary dark:invert mr-2"
               >
                 <span
-                  class="inset-x-0 inset-y-0 opacity-10 absolute bg-primary  dark:invert text-sm"
-                ></span>${{ format.tokenValue(rewardItem) }}
-                
+                  class="inset-x-0 inset-y-0 opacity-10 absolute bg-primary dark:invert text-sm"
+                ></span
+                >${{ format.tokenValue(rewardItem) }}
               </div>
             </div>
             <!-- mdi-account-arrow-right -->
@@ -323,16 +380,21 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
               <div
                 class="text-xs truncate relative py-1 px-3 rounded-full w-fit text-primary dark:invert mr-2"
               >
-                <span class="inset-x-0 inset-y-0 opacity-10 absolute bg-primary dark:invert"></span>
-                ${{format.tokenValue({
-                      amount: String(unbondingTotal),
-                      denom: stakingStore.params.bond_denom,
-                    })
-                  }}                
+                <span
+                  class="inset-x-0 inset-y-0 opacity-10 absolute bg-primary dark:invert"
+                ></span>
+                ${{
+                  format.tokenValue({
+                    amount: String(unbondingTotal),
+                    denom: stakingStore.params.bond_denom,
+                  })
+                }}
               </div>
             </div>
           </div>
-          <div class="mt-4 text-lg font-semibold mr-5 pl-5 border-t pt-4 text-right">
+          <div
+            class="mt-4 text-lg font-semibold mr-5 pl-5 border-t pt-4 text-right"
+          >
             {{ $t('account.total_value') }}: ${{ totalValue }}
           </div>
         </div>
@@ -351,10 +413,16 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
             >{{ $t('account.btn_delegate') }}</label
           >
           <label
+              for="lava_delegate"
+              class="btn btn-primary btn-sm mr-2"
+              @click="dialog.open('lava_delegate', {}, updateEvent)"
+          >delegate & restake</label
+          >
+          <label
             for="withdraw"
             class="btn btn-primary btn-sm"
             @click="dialog.open('withdraw', {}, updateEvent)"
-            >{{ $t('account.btn_withdraw') }}</label
+            >withdraw validators reward</label
           >
         </div>
       </div>
@@ -369,18 +437,26 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
             </tr>
           </thead>
           <tbody class="text-sm">
-            <tr v-if="delegations.length === 0"><td colspan="10"><div class="text-center">{{ $t('account.no_delegations') }}</div></td></tr>
+            <tr v-if="delegations.length === 0">
+              <td colspan="10">
+                <div class="text-center">
+                  {{ $t('account.no_delegations') }}
+                </div>
+              </td>
+            </tr>
             <tr v-for="(v, index) in delegations" :key="index">
               <td class="text-caption text-primary py-3">
                 <RouterLink
                   :to="`/${chain}/staking/${v.delegation.validator_address}`"
                   >{{
-                    format.validatorFromBech32(v.delegation.validator_address) || v.delegation.validator_address
+                    format.validatorFromBech32(
+                      v.delegation.validator_address
+                    ) || v.delegation.validator_address
                   }}</RouterLink
                 >
               </td>
               <td class="py-3">
-                {{ format.formatToken(v.balance, true, '0,0.[000000]') }}
+                {{ format.formatToken(v.balance, true, '0,0.[000]') }}
               </td>
               <td class="py-3">
                 {{
@@ -461,47 +537,164 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
             </tr>
           </thead>
           <tbody class="text-sm" v-for="(v, index) in unbonding" :key="index">
-              <tr>
-                <td class="text-caption text-primary py-3 bg-slate-200" colspan="10">
-                  <RouterLink
-                    :to="`/${chain}/staking/${v.validator_address}`"
-                    >{{
-                      v.validator_address
-                    }}</RouterLink
+            <tr>
+              <td
+                class="text-caption text-primary py-3 bg-slate-200"
+                colspan="10"
+              >
+                <RouterLink :to="`/${chain}/staking/${v.validator_address}`">{{
+                  v.validator_address
+                }}</RouterLink>
+              </td>
+            </tr>
+            <tr v-for="entry in v.entries">
+              <td class="py-3">{{ entry.creation_height }}</td>
+              <td class="py-3">
+                {{
+                  format.formatToken(
+                    {
+                      amount: entry.initial_balance,
+                      denom: stakingStore.params.bond_denom,
+                    },
+                    true,
+                    '0,0.[00]'
+                  )
+                }}
+              </td>
+              <td class="py-3">
+                {{
+                  format.formatToken(
+                    {
+                      amount: entry.balance,
+                      denom: stakingStore.params.bond_denom,
+                    },
+                    true,
+                    '0,0.[00]'
+                  )
+                }}
+              </td>
+              <td class="py-3">
+                <Countdown
+                  :time="
+                    new Date(entry.completion_time).getTime() -
+                    new Date().getTime()
+                  "
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bg-base-100 px-6 pt-4 pb-5 rounded-lg mb-6 shadow-md">
+      <div class="flex justify-between items-start">
+        <div>
+          <h3 class="card-title text-lg font-semibold">
+            Available for restake:
+            <span class="text-primary">
+          {{ availableForRestakeProvider?.amount ? format.formatToken(availableForRestakeProvider.amount, true, '0,0.[000]') : `0 LAVA` }}
+        </span>
+          </h3>
+          <p class="text-sm text-gray-500 mt-1">
+            (Also known as "empty provider")
+          </p>
+          <!-- Noticeable highlighted section -->
+          <div class="p-4 mt-2 border border-gray-700 rounded-md bg-gray-800">
+            <p class="text-sm text-gray-300">
+              To increase your restake balance ("Available for restake"), delegate to one or more validators. Once your balance is increased, you can delegate to the provider.
+            </p>
+            <p class="text-sm text-gray-300 mt-2">
+              If you need to unbond tokens, first "release" them from the provider to increase your restake balance. Then, you can unbond tokens from the validator, which will also reduce both your validator and restake balances. If your restaking balance is less than the amount you wish to unbond, the unbonding will proceed uniformly across all your providers.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center">
+          <label for="lava_restake" class="btn btn-primary btn-sm" @click="dialog.open('lava_restake', {}, updateEvent)">
+            Restake
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Provider delegations  -->
+    <div v-if="delegationProviders?.delegations?.length" class="bg-base-100 px-4 pt-3 pb-4 rounded mb-4 shadow">
+      <div class="flex justify-between">
+        <h2 class="card-title mb-4">Provider delegations</h2>
+        <div class="flex justify-end mb-4">
+          <label
+            for="lava_withdraw"
+            class="btn btn-primary btn-sm"
+            @click="dialog.open('lava_withdraw', {}, updateEvent)"
+            >Withdraw providers reward</label
+          >
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="table w-full text-sm table-zebra">
+          <thead>
+            <tr>
+              <th class="py-3">Provider</th>
+              <th class="py-3">CHAIN_ID</th>
+              <th class="py-3">{{ $t('account.delegation') }}</th>
+              <th class="py-3">{{ $t('account.rewards') }}</th>
+              <th class="py-3">{{ $t('account.action') }}</th>
+            </tr>
+          </thead>
+          <tbody class="text-sm">
+            <tr v-if="delegations.length === 0">
+              <td colspan="10">
+                <div class="text-center">
+                  {{ $t('account.no_delegations') }}
+                </div>
+              </td>
+            </tr>
+            <tr
+              v-for="(p, index) in delegationProviders.delegations"
+              :key="index"
+            >
+              <td class="text-caption text-primary py-3">
+                <RouterLink
+                  :to="`/${chain}/providers/${p.chainID}/${p.provider}`"
+                  >{{ getProviderName(p.provider) }}</RouterLink
+                >
+              </td>
+              <td class="text-caption text-primary py-3">
+                <RouterLink :to="`/${chain}/providers/${p.chainID}`">{{
+                  p.chainID
+                }}</RouterLink>
+              </td>
+              <td class="py-3">
+                {{ format.formatToken(p.amount, true, '0,0.[00]') }}
+              </td>
+              <td class="py-3">
+                {{
+                  format.formatTokens(
+                    rewardsFromProvider?.rewards?.find(
+                      (x: any) =>
+                        x.provider === p.provider && x.chain_id === p.chainID
+                    )?.amount
+                  )
+                }}
+              </td>
+              <td class="py-3">
+                <div class="flex justify-end">
+                  <label
+                    for="lava_restake"
+                    class="btn btn-primary btn-xs mr-2"
+                    @click="dialog.open('lava_restake', { provider_address: p.provider, chain_id: p.chainID }, updateEvent)"
+                    >restake</label
                   >
-                </td>
-              </tr>
-              <tr v-for="entry in v.entries">
-                <td class="py-3">{{ entry.creation_height }}</td>
-                <td class="py-3">
-                  {{
-                    format.formatToken(
-                      {
-                        amount: entry.initial_balance,
-                        denom: stakingStore.params.bond_denom,
-                      },
-                      true,
-                      '0,0.[00]'
-                    )
-                  }}
-                </td>
-                <td class="py-3">
-                  {{
-                    format.formatToken(
-                      {
-                        amount: entry.balance,
-                        denom: stakingStore.params.bond_denom,
-                      },
-                      true,
-                      '0,0.[00]'
-                    )
-                  }}
-                </td>
-                <td class="py-3">
-                  <Countdown :time="new Date(entry.completion_time).getTime() - new Date().getTime()" />
-                </td>
-              </tr>
-          </tbody>          
+                  <label for="lava_redelegate" class="btn btn-primary btn-xs mr-2" @click="dialog.open('lava_redelegate', {from_provider: p.provider, from_chain_id: p.chainID}, updateEvent)"
+                    >redelegate</label
+                  >
+                  <label for="lava_release" class="btn btn-primary btn-xs" @click="dialog.open('lava_release', {from_provider: p.provider, from_chain_id: p.chainID}, updateEvent)"
+                  >release</label
+                  >
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -520,15 +713,26 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
             </tr>
           </thead>
           <tbody class="text-sm">
-            <tr v-if="txs.length === 0"><td colspan="10"><div class="text-center">{{ $t('account.no_transactions') }}</div></td></tr>
+            <tr v-if="txs.length === 0">
+              <td colspan="10">
+                <div class="text-center">
+                  {{ $t('account.no_transactions') }}
+                </div>
+              </td>
+            </tr>
             <tr v-for="(v, index) in txs" :key="index">
               <td class="text-sm py-3">
-                <RouterLink :to="`/${chain}/block/${v.height}`" class="text-primary dark:invert">{{
-                  v.height
-                }}</RouterLink>
+                <RouterLink
+                  :to="`/${chain}/block/${v.height}`"
+                  class="text-primary dark:invert"
+                  >{{ v.height }}</RouterLink
+                >
               </td>
               <td class="truncate py-3" style="max-width: 200px">
-                <RouterLink :to="`/${chain}/tx/${v.txhash}`" class="text-primary dark:invert">
+                <RouterLink
+                  :to="`/${chain}/tx/${v.txhash}`"
+                  class="text-primary dark:invert"
+                >
                   {{ v.txhash }}
                 </RouterLink>
               </td>
@@ -543,7 +747,12 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
                 />
                 <Icon v-else icon="mdi-multiply" class="text-error text-lg" />
               </td>
-              <td class="py-3">{{ format.toLocaleDate(v.timestamp) }} <span class=" text-xs">({{ format.toDay(v.timestamp, 'from') }})</span> </td>
+              <td class="py-3">
+                {{ format.toLocaleDate(v.timestamp) }}
+                <span class="text-xs"
+                  >({{ format.toDay(v.timestamp, 'from') }})</span
+                >
+              </td>
             </tr>
           </tbody>
         </table>
@@ -564,21 +773,32 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
             </tr>
           </thead>
           <tbody class="text-sm">
-            <tr v-if="recentReceived.length === 0"><td colspan="10"><div class="text-center">{{ $t('account.no_transactions') }}</div></td></tr>
+            <tr v-if="recentReceived.length === 0">
+              <td colspan="10">
+                <div class="text-center">
+                  {{ $t('account.no_transactions') }}
+                </div>
+              </td>
+            </tr>
             <tr v-for="(v, index) in recentReceived" :key="index">
               <td class="text-sm py-3">
-                <RouterLink :to="`/${chain}/block/${v.height}`" class="text-primary dark:invert">{{
-                  v.height
-                }}</RouterLink>
+                <RouterLink
+                  :to="`/${chain}/block/${v.height}`"
+                  class="text-primary dark:invert"
+                  >{{ v.height }}</RouterLink
+                >
               </td>
               <td class="truncate py-3" style="max-width: 200px">
-                <RouterLink :to="`/${chain}/tx/${v.txhash}`" class="text-primary dark:invert">
+                <RouterLink
+                  :to="`/${chain}/tx/${v.txhash}`"
+                  class="text-primary dark:invert"
+                >
                   {{ v.txhash }}
                 </RouterLink>
               </td>
               <td class="flex items-center py-3">
                 <div class="mr-2">
-                  {{ mapAmount(v.events)?.join(", ")}}
+                  {{ mapAmount(v.events)?.join(', ') }}
                 </div>
                 <Icon
                   v-if="v.code === 0"
@@ -587,7 +807,12 @@ function mapAmount(events:{type: string, attributes: {key: string, value: string
                 />
                 <Icon v-else icon="mdi-multiply" class="text-error text-lg" />
               </td>
-              <td class="py-3">{{ format.toLocaleDate(v.timestamp) }} <span class=" text-xs">({{ format.toDay(v.timestamp, 'from') }})</span> </td>
+              <td class="py-3">
+                {{ format.toLocaleDate(v.timestamp) }}
+                <span class="text-xs"
+                  >({{ format.toDay(v.timestamp, 'from') }})</span
+                >
+              </td>
             </tr>
           </tbody>
         </table>

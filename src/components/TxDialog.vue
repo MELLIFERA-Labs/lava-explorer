@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { useTxDialog, useBlockchain } from '@/stores';
+import TxDialog from "@/widget-lib/components/TxDialog/index.vue";
 const store = useTxDialog();
 const chainStore = useBlockchain()
 </script>
 <template>
-  <ping-tx-dialog
+  <TxDialog
     :type="store.type"
     :sender="store.sender"
     :endpoint="store.endpoint"
@@ -13,5 +14,5 @@ const chainStore = useBlockchain()
     :registry-name="chainStore.current?.prettyName || chainStore.chainName"
     @view="store.view"
     @confirmed="store.confirmed"
-  ></ping-tx-dialog>
+  ></TxDialog>
 </template>

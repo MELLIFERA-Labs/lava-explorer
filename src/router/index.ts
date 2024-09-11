@@ -4,7 +4,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { setupLayouts } from "virtual:generated-layouts";
 // @ts-ignore
 import routes from "~pages";
-
+console.log(setupLayouts(routes))
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [...setupLayouts(routes)],

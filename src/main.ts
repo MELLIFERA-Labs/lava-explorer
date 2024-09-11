@@ -8,7 +8,8 @@ import LazyLoad from 'lazy-load-vue3';
 
 import router from './router';
 import { useBaseStore } from './stores/useBaseStore';
-
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
 // Create vue app
 const app = createApp(App);
 // Use plugins

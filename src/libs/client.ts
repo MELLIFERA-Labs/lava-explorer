@@ -49,7 +49,7 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   }
 
   static newStrategy(endpoint: string, chain: any) {
-    
+
     let req
     if(chain) {
       // find by name first
@@ -81,7 +81,7 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   async getBankDenomMetadata() {
     return this.request(this.registry.bank_denoms_metadata, {});
   }
-  async getBankSupply(page?: PageRequest) {    
+  async getBankSupply(page?: PageRequest) {
     if(!page) page = new PageRequest()
     const query =`?${page.toQueryString()}`;
     return this.request(this.registry.bank_supply, {}, query);
@@ -223,7 +223,7 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
       // page.reverse = true
       page.count_total = true
       page.offset = 0
-    } 
+    }
     const query =`?${page.toQueryString()}`;
     return this.request(this.registry.staking_validators_delegations, {
       validator_addr,
@@ -282,7 +282,7 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   // query ibc receiving msgs
   // ?&pagination.reverse=true&events=recv_packet.packet_dst_channel='${channel}'&events=recv_packet.packet_dst_port='${port}'
   async getTxs(query: string, params: any, page?: PageRequest) {
-    if(!page) page = new PageRequest()    
+    if(!page) page = new PageRequest()
     return this.request(this.registry.tx_txs, params, `${query}&${page.toQueryString()}`);
   }
   async getTxsAt(height: string | number) {
@@ -348,5 +348,32 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   }
   async getInterchainSecurityValidatorRotatedKey(chain_id: string, provider_address: string) {
     return this.request(this.registry.interchain_security_ccv_provider_validator_consumer_addr, {chain_id, provider_address});
+  }
+  async getLavaSpecs() {
+    return this.request({url: "/lavanet/lava/spec/spec", adapter } as Request<{Spec: Array<any>, pagination: any}> , {});
+  }
+  getLavaSupportedChains() {
+    return this.request({url: "/lavanet/lava/spec/show_all_chains", adapter } as Request<{chainInfoList: Array<any>}> , {});
+  }
+  async getLavaProviders(spec: string, showFrozen = false) {
+    if(showFrozen) {
+      return this.request({url: "/lavanet/lava/pairing/providers/{chainID}?showFrozen=true", adapter} as Request<{stakeEntry: any}>, { chainID: spec, showFrozen });
+    }
+    return this.request({url: "/lavanet/lava/pairing/providers/{chainID}?showFrozen=false", adapter} as Request<{stakeEntry: any}>, { chainID: spec });
+  }
+  async getProviderChains(address: string) {
+    return this.request({url: "/lavanet/lava/pairing/provider/{address}/", adapter} as Request<{stakeEntries: any}>, { address });
+  }
+  async getLavaSpecByChainID(chainID: string) {
+    return this.request({url: "/lavanet/lava/spec/spec/{chainID}", adapter} as Request<{Spec: any}>, { chainID });
+  }
+  async delegatorProviders(address: string) {
+    return this.request({url: "/lavanet/lava/dualstaking/delegator_providers/{address}", adapter} as Request<{delegations: any}>, { address });
+  }
+  async getRewardsFromProvider(address: string) {
+    return this.request({url: "/lavanet/lava/dualstaking/delegator_rewards/{address}", adapter} as Request<{rewards: any}>, { address });
+  }
+  async getEpochDetails() {
+    return this.request({url: "/lavanet/lava/epochstorage/epoch_details", adapter} as Request<{EpochDetails: any}>, {});
   }
 }

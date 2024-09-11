@@ -50,16 +50,14 @@ export const useTxDialog = defineStore('txDialogStore', {
       }
     },
     view(tx: {
-      detail: {
         eventType: string,
         hash: string
-      }
-    }) {
-      console.log(tx.detail)
-      if (tx.detail && tx.detail.hash) router.push({ path: `/${this.blockchain.chainName}/tx/${tx.detail.hash}` })
+      }) {
+      if (tx.eventType && tx.hash) router.push({ path: `/${this.blockchain.chainName}/tx/${tx.hash}` })
     },
     confirmed(tx: any) {
       console.log("confirmed:", tx)
+      console.log(CALLBACK)
       if(CALLBACK) {
         CALLBACK()
       }

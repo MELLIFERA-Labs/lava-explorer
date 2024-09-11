@@ -8,11 +8,10 @@ import {
     useTxDialog,
 } from '@/stores';
 import { computed } from '@vue/reactivity';
-import { onMounted, ref } from 'vue';
+import {onMounted, ref, watch} from 'vue';
 import { Icon } from '@iconify/vue';
 import type { Key, SlashingParam, Validator } from '@/types';
 import { formatSeconds}  from '@/libs/utils'
-import { diff } from 'semver';
 
 const staking = useStakingStore();
 const base = useBaseStore();
@@ -183,8 +182,11 @@ const loadAvatar = (identity: string) => {
   });
 };
 
-const loadAvatars = () => {
+const loadAvatars = async () => {
   // fetches all avatars from keybase and stores it in localStorage
+  if(!staking.validators.length) {
+    await staking.init()
+  }
   const promises = staking.validators.map((validator) => {
     const identity = validator.description?.identity;
 

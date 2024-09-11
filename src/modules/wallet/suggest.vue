@@ -39,7 +39,7 @@ async function initParamsForKeplr() {
     const chain = selected.value
     if(!chain.endpoints?.rest?.at(0)) throw new Error("Endpoint does not set");
     const client = CosmosRestClient.newDefault(chain.endpoints.rest?.at(0)?.address || "")
-    const b = await client.getBaseBlockLatest()   
+    const b = await client.getBaseBlockLatest()
     const chainid = b.block.header.chain_id
 
     const gasPriceStep = chain.keplrPriceStep || {
@@ -99,7 +99,7 @@ async function initSnap() {
 
     if(!chain.endpoints?.rest?.at(0)) throw new Error("Endpoint does not set");
     const client = CosmosRestClient.newDefault(chain.endpoints.rest?.at(0)?.address || "")
-    const b = await client.getBaseBlockLatest()   
+    const b = await client.getBaseBlockLatest()
     const chainId = b.block.header.chain_id
 
     conf.value = JSON.stringify({
@@ -137,6 +137,7 @@ function suggest() {
             })
         }
     } else {
+        // @ts-ignore
         suggestChain(JSON.parse(conf.value));
     }
 }

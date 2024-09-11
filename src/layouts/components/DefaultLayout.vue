@@ -92,7 +92,13 @@ dayjs()
           <Icon icon="mdi-close" class="text-2xl" />
         </div>
       </div>
-      <div
+      <div class="flex justify-between mt-1 pl-4 py-4">
+        <h1><a class="link link-primary no-underline"
+               target="_blank"
+               rel="noopener noreferrer"
+               style="color: #ffea00;" href="https://mellifera.network">MELLIFERA</a></h1>
+      </div>
+       <div
         v-for="(item, index) of blockchain.computedChainMenu"
         :key="index"
         class="px-2"
@@ -143,7 +149,7 @@ dayjs()
               {{ item?.badgeContent }}
             </div>
           </div>
-          <div class="collapse-content">            
+          <div class="collapse-content">
             <div v-for="(el, key) of item?.children" class="menu bg-base-100 w-full !p-0">
               <RouterLink
                 v-if="isNavLink(el)"
@@ -182,7 +188,7 @@ dayjs()
               </RouterLink>
             </div>
             <div v-if="index === 0 && dashboard.networkType === NetworkType.Testnet" class="menu bg-base-100 w-full !p-0">
-              <RouterLink 
+              <RouterLink
               class="hover:bg-gray-100 dark:hover:bg-[#373f59] rounded cursor-pointer px-3 py-2 flex items-center"
               :to="`/${blockchain.chainName}/faucet`">
                 <Icon
@@ -195,7 +201,7 @@ dayjs()
                   Faucet
                 </div>
                 <div
-                  class="badge badge-sm text-white border-none badge-error ml-auto" 
+                  class="badge badge-sm text-white border-none badge-error ml-auto"
                 >
                   New
                 </div>
@@ -231,7 +237,7 @@ dayjs()
           </div>
           <div
             v-if="item?.badgeContent"
-            class="badge badge-sm text-white border-none" 
+            class="badge badge-sm text-white border-none"
             :class="item?.badgeClass"
           >
             {{ item?.badgeContent }}
@@ -308,7 +314,7 @@ dayjs()
         </a>
         <div class="px-4 text-sm pt-2 text-gray-400 pb-2 uppercase">{{ $t('module.links') }}</div>
         <a
-          href="https://twitter.com/ping_pub"
+          href="https://twitter.com/ruslanglaznyov"
           target="_blank"
           class="py-2 px-4 flex items-center cursor-pointer rounded-lg hover:bg-gray-100 dark:hover:bg-[#373f59]"
         >
