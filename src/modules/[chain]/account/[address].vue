@@ -456,7 +456,7 @@ function mapAmount(
                 >
               </td>
               <td class="py-3">
-                {{ format.formatToken(v.balance, true, '0,0.[000000]') }}
+                {{ format.formatToken(v.balance, true, '0,0.[000]') }}
               </td>
               <td class="py-3">
                 {{

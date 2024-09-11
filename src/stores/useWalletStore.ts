@@ -4,6 +4,7 @@ import {fromBech32, toBech32} from '@cosmjs/encoding';
 import type {Coin, Delegation, DelegatorRewards, UnbondingResponses, WalletConnected,} from '@/types';
 import {useStakingStore} from './useStakingStore';
 import router from '@/router'
+import {nextTick} from "vue";
 
 export const useWalletStore = defineStore('walletStore', {
   state: () => {
@@ -175,8 +176,12 @@ export const useWalletStore = defineStore('walletStore', {
       localStorage.removeItem(key);
       this.$reset()
     },
-    setConnectedWallet(value: WalletConnected) {
-      if(value) this.wallet = value 
+    async setConnectedWallet(value: WalletConnected) {
+
+      if(value) this.wallet = value
+      await nextTick()
+      this.loadMyAsset()
+      this.loadLavaAsset()
     },
     suggestChain() {
       if (window.location.pathname === '/SIDE-Testnet') {

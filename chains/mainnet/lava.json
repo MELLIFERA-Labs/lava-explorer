@@ -1,38 +1,38 @@
 {
-    "chain_name": "lava",
-    "api": [
-        {
-            "address": "https://lava-testnet-rest.mellifera.network",
-            "provider": "MELLIFERA"
-        }
-    ],
-    "rpc": [
-        {
-            "address": "https://lava-testnet-rpc.mellifera.network",
-            "provider": "MELLIFERA"
-        }
-    ],
-    "sdk_version": "0.37.4",
-    "coin_type": "118",
-    "min_tx_fee": "800",
-    "assets": [{
-        "base": "ulava",
-        "symbol": "lava",
-        "exponent": "6"
-    }],
-    "addr_prefix": "lava@",
-    "theme_color": "#ce4747",
-    "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75",
-    "lava_specs_meta": {
-        "LAV1": {
-            "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75"
-        }
-    },
-    "disabled_specs": [
-        "COSMOSSDK50",
-        "COSMOSSDK",
-        "COSMOSWASM",
-        "IBC",
-        "TENDERMINT"
-    ]
+  "chain_name": "lava",
+  "api": [
+    {
+      "address": "https://lava-testnet-rest.mellifera.network",
+      "provider": "MELLIFERA"
+    }
+  ],
+  "rpc": [
+    {
+      "address": "https://lava-testnet-rpc.mellifera.network",
+      "provider": "MELLIFERA"
+    }
+  ],
+  "sdk_version": "0.37.4",
+  "coin_type": "118",
+  "min_tx_fee": "800",
+  "assets": [{
+    "base": "ulava",
+    "symbol": "lava",
+    "exponent": "6"
+  }],
+  "addr_prefix": "lava@",
+  "theme_color": "#ce4747",
+  "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75",
+  "lava_specs_meta": {
+    "LAV1": {
+      "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75"
+    }
+  },
+  "disabled_specs": [
+    "COSMOSSDK50",
+    "COSMOSSDK",
+    "COSMOSWASM",
+    "IBC",
+    "TENDERMINT"
+  ]
 }

@@ -48,7 +48,10 @@ onMounted(() => {
   // }
 });
 const ticker = computed(() => store.coinInfo.tickers[store.tickerIndex]);
-
+const balanceOfStakingToken = computed(() => {
+  console.log(walletStore.balanceOfStakingToken)
+  return walletStore.balanceOfStakingToken
+});
 const currName = ref("")
 blockchain.$subscribe((m, s) => {
   if (s.chainName !== currName.value) {
@@ -297,7 +300,7 @@ const amount = computed({
         <div class="bg-gray-100 dark:bg-[#373f59] rounded-sm px-4 py-3">
           <div class="text-sm mb-1">{{ $t('account.balance') }}</div>
           <div class="text-lg font-semibold text-main">
-            {{ format.formatToken(walletStore.balanceOfStakingToken) }}
+            {{ format.formatToken(balanceOfStakingToken) }}
           </div>
           <div class="text-sm" :class="color">
             ${{ format.tokenValue(walletStore.balanceOfStakingToken) }}
@@ -444,8 +447,8 @@ const amount = computed({
         </table>
       </div>
 
-      <div class="grid md:!grid-cols-4 gap-4 auto-cols-auto px-4 pb-6 mt-4">
-        <label for="PingTokenConvert" class="btn btn-warning text-white">{{ $t('index.btn_swap') }}</label>
+      <div class="grid md:!grid-cols-3 gap-3 auto-cols-auto px-4 pb-6 mt-4">
+<!--        <label for="PingTokenConvert" class="btn btn-warning text-white">{{ $t('index.btn_swap') }}</label>-->
         <label for="send" class="btn !bg-yes !border-yes text-white" @click="dialog.open('send', {}, updateState)">{{ $t('account.btn_send') }}</label>
         <label for="delegate" class="btn !bg-info !border-info text-white"
           @click="dialog.open('delegate', {}, updateState)">{{ $t('account.btn_delegate') }}</label>
