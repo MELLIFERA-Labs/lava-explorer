@@ -37,7 +37,7 @@
       </div>
       <div>
         <span class="font-semibold">{{ $t('block.average_block_time') }}:</span>
-        <span class="ml-2">{{ (store.calculateBlockTime / 1000).toFixed(1) }}s</span>
+        <span class="ml-2">{{ store.calculateBlockTime ? (store.calculateBlockTime / 1000).toFixed(1) : '0' }}s</span>
       </div>
     </div>
   </div>

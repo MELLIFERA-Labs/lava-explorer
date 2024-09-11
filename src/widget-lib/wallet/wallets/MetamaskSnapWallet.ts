@@ -30,7 +30,7 @@ export class MetamaskSnapWallet implements AbstractWallet {
     name: WalletName.MetamaskSnap;
     chainId: string;
     registry: Registry;
-    prefix: string;    
+    prefix: string;
     // aminoTypes = new AminoTypes( {...createDefaultAminoConverters(), ...createWasmAminoConverters()});
 
     constructor(arg: WalletArgument, registry: Registry) {
@@ -95,6 +95,7 @@ export class MetamaskSnapWallet implements AbstractWallet {
         );
 
         const offlineSigner = new CosmjsOfflineSigner(this.chainId);
+        //@ts-ignore
         const { signature, signed } = await offlineSigner.signDirect(transaction.signerAddress, signDoc);
 
         return TxRaw.fromPartial({
