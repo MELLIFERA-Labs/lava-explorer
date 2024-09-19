@@ -19,6 +19,7 @@ const staking = useStakingStore();
 const dialog = useTxDialog();
 const cache = JSON.parse(localStorage.getItem('providers-avatars') || '{}');
 const avatars = ref(cache || {});
+const providerPerformance = ref({} as any);
 const loadAvatar = (identity: string) => {
   // fetches avatar from keybase and stores it in localStorage
   fetchAvatar(identity).then(() => {
@@ -44,7 +45,8 @@ const loadAvatars = () => {
   );
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await lavaProvidersStore.reloadProviders(chainId);
   lavaProvidersStore.getActiveProviders(chainId).then((p) => {
     activeProviders.value = p;
   });
@@ -247,6 +249,7 @@ watch(activeProviders, (newValue: any) => {
               <th scope="col" class="text-right uppercase">
                 Total stake / Self stake
               </th>
+              <th scope="col" class="text-right uppercase">Performance CU</th>
               <th scope="col" class="text-right uppercase">Delegation limit</th>
               <th scope="col" class="text-right uppercase">
                 {{ $t('staking.commission') }}
@@ -358,6 +361,7 @@ watch(activeProviders, (newValue: any) => {
                   >
                 </div>
               </td>
+              <td class="text-right text-xs"><span class="loading loading-spinner"></span></td>
               <!-- 👉 Delegate limit -->
               <td class="text-right text-xs">
                 {{

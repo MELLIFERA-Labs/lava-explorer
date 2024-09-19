@@ -25,8 +25,14 @@
   "theme_color": "#ce4747",
   "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75",
   "lava_specs_meta": {
-    "LAV1": {
+    "LAVA": {
       "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75"
+    },
+    "COSMOSHUB": {
+        "logo": "https://ping.pub/logos/cosmos.svg"
+     },
+    "COSMOSHUBT": {
+        "logo": "https://ping.pub/logos/cosmos.svg"
     }
   },
   "disabled_specs": [

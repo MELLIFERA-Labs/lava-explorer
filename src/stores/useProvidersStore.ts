@@ -36,6 +36,9 @@ export const useLavaProvidersStore = defineStore('providersStore', {
       frozenProviders: [] as any[],
       jailedProviders: [] as any[],
       activeProviders: [] as any[],
+      allProviders: {
+        stakeEntry: [],
+      },
       latestHeight: 0,
     };
   },
@@ -54,8 +57,15 @@ export const useLavaProvidersStore = defineStore('providersStore', {
         await this.fetchLatestHeight();
       }
     },
-    getAllProviders(chainName: string) {
-      return this.blockchain.rpc?.getLavaProviders(chainName, true);
+    async reloadProviders(chainName: string) {
+        this.allProviders = await this.blockchain.rpc?.getLavaProviders(chainName, true);
+    },
+    async getAllProviders(chainName: string) {
+      if(!this.allProviders.stakeEntry.length) {
+        this.allProviders = await this.blockchain.rpc?.getLavaProviders(chainName, true);
+        return this.allProviders;
+      }
+      return this.allProviders;
     },
     async getProviderByAddress(address: string, chainName: string) {
       await this.ensureLatestHeight();
@@ -88,9 +98,7 @@ export const useLavaProvidersStore = defineStore('providersStore', {
     },
     async getActiveProviders(chainName: string) {
       await this.ensureLatestHeight();
-      const providersResponse = await this.blockchain.rpc?.getLavaProviders(
-        chainName
-      );
+      const providersResponse = await this.getAllProviders(chainName);
       const activeProviders = providersResponse.stakeEntry.filter(
         (provider: { stake_applied_block: string }) =>
           Number(provider.stake_applied_block) <= Number(this.latestHeight)
