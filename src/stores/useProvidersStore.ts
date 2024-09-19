@@ -96,6 +96,11 @@ export const useLavaProvidersStore = defineStore('providersStore', {
         return provider;
       });
     },
+    async providerCus(chainName: string, provider: string) {
+      const res = await this.blockchain.rpc?.getProvidersCUs(chainName, provider);
+      const [providerCU] = res.info;
+      return providerCU;
+    },
     async getActiveProviders(chainName: string) {
       await this.ensureLatestHeight();
       const providersResponse = await this.getAllProviders(chainName);

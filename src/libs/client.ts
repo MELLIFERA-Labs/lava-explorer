@@ -40,7 +40,7 @@ function registeCustomRequest() {
     }
   });
 }
-    
+
 registeCustomRequest()
 
 export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
@@ -363,6 +363,9 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   }
   async getProviderChains(address: string) {
     return this.request({url: "/lavanet/lava/pairing/provider/{address}/", adapter} as Request<{stakeEntries: any}>, { address });
+  }
+  async getProvidersCUs(chainID: string, provider: string) {
+    return this.request({url: `/lavanet/lava/rewards/SpecTrackedInfo/${chainID}/${provider}`, adapter} as Request<{info: any[]}>, { chainID, provider });
   }
   async getLavaSpecByChainID(chainID: string) {
     return this.request({url: "/lavanet/lava/spec/spec/{chainID}", adapter} as Request<{Spec: any}>, { chainID });
