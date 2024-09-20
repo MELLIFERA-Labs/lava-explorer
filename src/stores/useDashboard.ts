@@ -85,7 +85,7 @@ export interface ChainConfig {
     low: number,
     average: number,
     high: number,
-  },  
+  },
   faucet?: {
     amount: string,
     ip_limit: number,
@@ -97,6 +97,7 @@ export interface ChainConfig {
     logo: string,
   }>
   disabled_specs?: string[];
+  lava_iprpc_assets?: Asset[];
 }
 
 export interface LocalConfig {
@@ -141,6 +142,13 @@ export interface LocalConfig {
         logo: string,
   }>;
   disabled_specs?: string[];
+  lava_iprpc_assets?:  {
+    base: string;
+    coingecko_id: string;
+    exponent: string;
+    logo: string;
+    symbol: string;
+  }[];
 }
 
 function apiConverter(api: any[]) {
@@ -175,6 +183,23 @@ export function fromLocal(lc: LocalConfig): ChainConfig {
         { denom: x.symbol.toLowerCase(), exponent: Number(x.exponent) },
       ],
     }));
+  }
+  if(lc.lava_iprpc_assets && Array.isArray(lc.lava_iprpc_assets)) {
+    conf.lava_iprpc_assets =  lc.lava_iprpc_assets.map(x => {
+      return {
+        name: x.base,
+        base: x.base,
+        display: x.symbol,
+        symbol: x.symbol,
+        logo_URIs: { svg: x.logo },
+        coingecko_id: x.coingecko_id,
+        exponent: x.exponent,
+        denom_units: [
+          { denom: x.base, exponent: 0 },
+          { denom: x.symbol.toLowerCase(), exponent: Number(x.exponent) },
+        ],
+      }
+    })
   }
   conf.versions = {
     cosmosSdk: lc.sdk_version
@@ -321,18 +346,25 @@ export const useDashboard = defineStore('dashboard', {
       const keys = Object.keys(this.chains) // load all blockchain
       // Object.keys(this.favoriteMap) //only load favorite once it has too many chains
       keys.forEach(k => {
-        if(Array.isArray(this.chains[k]?.assets)) this.chains[k].assets.forEach(a => {
-          if(a.coingecko_id !== undefined && a.coingecko_id.length > 0) {
-            coinIds.push(a.coingecko_id)
-            a.denom_units.forEach(u => {
-              this.coingecko[u.denom] = {
-                coinId: a.coingecko_id || '',
-                exponent: u.exponent,
-                symbol: a.symbol
-              }
-            })
-          } 
-        })
+        if(Array.isArray(this.chains[k]?.assets)) {
+          let assets = this.chains[k].assets
+          if(Array.isArray(this.chains[k]?.lava_iprpc_assets)) {
+            // @ts-ignore
+            assets = [...assets, ...this.chains[k].lava_iprpc_assets]
+          }
+          assets.forEach(a => {
+            if(a.coingecko_id !== undefined && a.coingecko_id.length > 0) {
+              coinIds.push(a.coingecko_id)
+              a.denom_units.forEach(u => {
+                this.coingecko[u.denom] = {
+                  coinId: a.coingecko_id || '',
+                  exponent: u.exponent,
+                  symbol: a.symbol
+                }
+              })
+            }
+          })
+        }
       })
 
       const currencies = ['usd, cny'] // usd,cny,eur,jpy,krw,sgd,hkd
@@ -366,7 +398,7 @@ export const useDashboard = defineStore('dashboard', {
       this.status = LoadingStatus.Loaded;
     },
     async loadLocalConfig(network: NetworkType) {
-      const config: Record<string, ChainConfig> = {} 
+      const config: Record<string, ChainConfig> = {}
       const source: Record<string, LocalConfig> =
         network === NetworkType.Mainnet
           ? import.meta.glob('../../chains/mainnet/*.json', { eager: true })

@@ -247,8 +247,6 @@ export const useFormatter = defineStore('formatter', {
     ): string {
       if (token && token.amount && token?.denom) {
         let amount = Number(token.amount);
-        console.log('---->', token)
-        console.log("amount===>", amount)
         let denom = token.denom;
 
         let conf = mode === 'local'? this.blockchain.current?.assets?.find(
@@ -276,12 +274,10 @@ export const useFormatter = defineStore('formatter', {
             denom = unit.denom.toUpperCase();
           }
         }
-        console.log(token);
-        console.log("amount", amount, denom)
         if(amount < 0.000001) {
           return `0 ${denom.substring(0, 10)}`;
         }
-        if(amount < 0.01) {
+        if(amount < 0.09) {
           fmt = '0.[000000]'
         }
         return `${numeral(amount).format(fmt)} ${

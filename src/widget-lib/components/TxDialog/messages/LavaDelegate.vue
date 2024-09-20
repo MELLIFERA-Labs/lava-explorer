@@ -68,16 +68,6 @@ function loadInactiveValidators() {
     inactiveValidators.value = x.validators;
   });
 }
-const list: ComputedRef<
-    {
-      operator_address: string;
-      description: { moniker: string };
-      commission: { commission_rates: { rate: string } };
-      status: string;
-    }[]
-> = computed(() => {
-  return [...providers.value, ...inactiveValidators.value];
-});
 
 const available = computed(() => {
   const convert = new TokenUnitConverter(props.metadata);
@@ -135,7 +125,9 @@ function matchMoniker(p: any) {
 function fetchProviders(chainID: string) {
   getProviders(props.endpoint, chainID).then((x) => {
     providers.value = x.stakeEntry;
-    provider.value = x.stakeEntry.find(matchMoniker)?.address;
+    if(!params.value.provider_address) {
+      provider.value = x.stakeEntry.find(matchMoniker)?.address;
+    }
   });
 }
 watch(specChainId, (current,prev) => {
@@ -154,6 +146,7 @@ function initial() {
   providers.value = [];
   provider.value = params.value.provider_address;
   specChainId.value = params.value.chain_id;
+  validator.value = params.value.validator_address;
   getActiveValidators(props.endpoint).then((x) => {
     activeValidators.value = x.validators;
     if (!params.value.validator_address) {

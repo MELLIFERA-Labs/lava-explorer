@@ -14,21 +14,23 @@ const theme = computed(() => {
 });
 
 const changeMode = (val?: 'dark' | 'light') => {
-    let value: 'dark' | 'light' = 'dark';
-    const currentValue: 'dark' | 'light' = val || theme.value;
-    if (currentValue === 'dark') {
-        value = 'light';
-    }
-    if (value === 'light') {
-        document.documentElement.classList.add('light');
-        document.documentElement.classList.remove('dark');
-    } else {
-        document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
-    }
-    document.documentElement.setAttribute('data-theme', value);
-    window.localStorage.setItem('theme', value);
-    baseStore.theme = value;
+    // let value: 'dark' | 'light' = 'dark';
+    // const currentValue: 'dark' | 'light' = val || theme.value;
+    // if (currentValue === 'dark') {
+    //     value = 'light';
+    // }
+    // if (value === 'light') {
+    //     document.documentElement.classList.add('light');
+    //     document.documentElement.classList.remove('dark');
+    // } else {
+    //     document.documentElement.classList.add('dark');
+    //     document.documentElement.classList.remove('light');
+    // }
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+    document.documentElement.setAttribute('data-theme', 'dark');
+    window.localStorage.setItem('theme', 'dark');
+    baseStore.theme = 'dark';
 };
 
 onMounted(() => {
@@ -38,11 +40,11 @@ onMounted(() => {
 
 <template>
     <div class="tooltip tooltip-bottom delay-1000">
-        <button
-            class="btn btn-ghost btn-circle btn-sm mx-1"
-            @click="changeMode()"
-        >
-            <Icon :icon="themeMap?.[theme]" class="text-2xl text-gray-500 dark:text-gray-400" />
-        </button>
+<!--        <button-->
+<!--            class="btn btn-ghost btn-circle btn-sm mx-1"-->
+<!--            @click="changeMode()"-->
+<!--        >-->
+<!--            <Icon :icon="themeMap?.[theme]" class="text-2xl text-gray-500 dark:text-gray-400" />-->
+<!--        </button>-->
     </div>
 </template>
