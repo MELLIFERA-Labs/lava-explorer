@@ -1,4 +1,138 @@
+<script setup lang="ts">
+import {ref, computed, onMounted, type ComputedRef} from 'vue';
+import { useDebounceFn } from "@vueuse/core"
+import {useFormatter, useStakingStore} from "@/stores";
+import {decimal2percent} from "@/widget-lib/utils/format";
+import { useBlockchain } from '@/stores/useBlockchain';
+import BigNumber from "bignumber.js";
+const format = useFormatter();
+let amount = ref('');
+let validator = ref('');
+let inactiveValidators = ref([]);
+let loadingRewards = ref(false);
+const blockchain = useBlockchain();
+function showResult() {
+  return amount.value && validator.value;
+}
+const staking = useStakingStore();
+const listValidator: ComputedRef<
+    {
+      operator_address: string;
+      description: { moniker: string };
+      commission: { commission_rates: { rate: string } };
+      status: string;
+    }[]
+> = computed(() => {
+  const preferredIndex = staking.validators.findIndex((v) => v.description.moniker.trim().toLowerCase().includes('mellifera'));
+  if (preferredIndex > -1) {
+    const preferred = staking.validators.splice(preferredIndex, 1)[0];
+    return [preferred, ...staking.validators, ...inactiveValidators.value];
+  }
+  return [...staking.validators, ...inactiveValidators.value];
 
+});
+function loadInactiveValidators() {
+   staking.fetchInacitveValdiators().then((x: any) => {
+     inactiveValidators.value = x;
+   })
+}
+
+const onAmountInput = useDebounceFn(() => {
+  loadRewards();
+}, 500)
+const parseRewardsData = (data: any, rewardType: string) => {
+  const rewards = [];
+  data.info.forEach((item: any) => {
+    item.amount.forEach((amt: any) => {
+      const denom = amt.denom;
+      rewards.push({
+        type: item.source,
+        amount: amt.amount,
+        denom,
+        rewardType, // 'Validator' or 'Provider'
+        usdValue: 0, // We'll calculate this later
+      });
+    });
+  });
+  return rewards;
+};
+const rewards = ref([] as any[]);
+const totalRewards = computed(() => {
+  const totals: Record<string, BigNumber> = {};
+  rewards.value.forEach((reward) => {
+    if (!totals[reward.denom]) {
+      totals[reward.denom] = BigNumber(0);
+    }
+    totals[reward.denom] = BigNumber(totals[reward.denom]).plus(reward.amount);
+  });
+  return totals;
+});
+async function loadRewards() {
+  if (!amount.value || !validator.value) {
+    loadingRewards.value = false;
+    return;
+  }
+  loadingRewards.value = true;
+  const convertAmount = BigNumber(Number(amount.value)).times(BigNumber(10).pow(6)).toString() + 'ulava';
+  const validatorRewardsData = await blockchain.rpc.getEstimateValidatorRewards(validator.value, convertAmount);
+  const validatorRewards = parseRewardsData(validatorRewardsData, 'Validator');
+  // const rewards = ref([...validatorRewards, ...providerRewards]);
+  rewards.value = validatorRewards;
+  loadingRewards.value = false;
+}
+const exchangeRates: Record<string, number> = {
+  'LAVA': 0.005, // Example: 1 LAVA = $0.005
+  'ATOM': 7.5,   // Example: 1 ATOM = $7.50
+};
+
+const totalRewardsUSD = computed(() => {
+  const totals: Record<string, string> = {};
+  Object.keys(totalRewards.value).forEach((currency) => {
+    const amount = totalRewards.value[currency];
+    const usdValue = amount * (exchangeRates[currency] || 0);
+    totals[currency] = usdValue.toFixed(2);
+  });
+  return totals;
+});
+
+const grandTotalUSD = computed(() => {
+  let total = 0;
+  Object.keys(totalRewardsUSD.value).forEach((currency) => {
+    total += parseFloat(totalRewardsUSD.value[currency]);
+  });
+  return total.toFixed(2);
+});
+const formatNumber = (num: number) => {
+  return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+};
+
+// Denomination to currency mapping
+
+
+
+
+// Function to parse rewards data
+
+// Parse rewards
+
+
+// Combine all rewards
+// const rewards = ref([...validatorRewards, ...providerRewards]);
+//
+// // Compute total rewards per currency
+// const totalRewards = computed(() => {
+//   const totals: Record<string, number> = {};
+//   rewards.value.forEach((reward) => {
+//     if (!totals[reward.currency]) {
+//       totals[reward.currency] = 0;
+//     }
+//     totals[reward.currency] += reward.amount;
+//   });
+//   return totals;
+// });
+
+// Placeholder exchange rates (replace with actual rates)
+</script>
 <template>
 
   <div>
@@ -14,6 +148,8 @@
         </label>
         <label class="join">
           <input
+              v-model="amount"
+              @input="onAmountInput"
               type="number"
               placeholder="Your amount"
               class="input border border-gray-300 dark:border-gray-600 w-full join-item dark:text-white"
@@ -21,16 +157,21 @@
         </label>
       </div>
       <div class="form-control">
-        <label class="label">
-          <span class="label-text">Validator</span>
-        </label>
-        <select  class="select select-bordered dark:text-white">
-          <option value="">Select a validator</option>
-          <option  value="v.operator_address">
-             test
-<!--            <span v-if="v.status !== 'BOND_STATUS_BONDED'">x</span>-->
-          </option>
-        </select>
+          <label class="label">
+            <span class="label-text">Validator</span>
+            <a class="label-text" @click="loadInactiveValidators()"
+            >Show Inactive</a
+            >
+          </label>
+          <select v-model="validator" class="select select-bordered dark:text-white">
+            <option value="">Select a validator</option>
+            <option v-for="v in listValidator" :value="v.operator_address">
+              {{ v.description.moniker }} ({{
+                decimal2percent(v.commission.commission_rates.rate)
+              }}%)
+              <span v-if="v.status !== 'BOND_STATUS_BONDED'">x</span>
+            </option>
+          </select>
       </div>
       <div class="form-control">
         <label class="label">
@@ -75,7 +216,7 @@
 <!--        </form>-->
       </div>
     </div>
-    <div>
+    <div v-if="showResult()">
       <!-- Rewards Summary Section -->
       <div class="bg-base-100 rounded-sm p-6 mt-8 shadow-lg">
 
@@ -89,13 +230,14 @@
         <!-- Total Rewards Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div
-              v-for="(amount, currency) in totalRewards"
-              :key="currency"
+              v-for="(amount, denom) in totalRewards"
+              :key="denom"
               class="bg-white dark:bg-[#1f2937] rounded-lg shadow p-6"
           >
             <div class="text-center">
               <h3 class="text-xl font-medium text-gray-900 dark:text-white">
-                {{ currency }}
+<!--                {{ // item.denom }}-->
+               {{ format.tokenDisplayDenom(denom).toUpperCase() }}
               </h3>
               <p class="text-sm text-gray-500 dark:text-gray-400">
                 Total Rewards
@@ -103,10 +245,12 @@
             </div>
             <div class="mt-4 text-center">
               <div class="text-3xl font-bold text-main">
-                {{ formatNumber(amount) }} {{ currency }}
+<!--                {{// amount}}-->
+<!--                {{ // formatNumber(amount) }} {{ // currency }}-->
+                {{ format.formatToken( { amount: amount.toString(), denom}) }}
               </div>
               <div class="text-md text-green-600 dark:text-green-400">
-                ${{ totalRewardsUSD[currency] }}
+  <!--                ${{ // totalRewardsUSD[currency] }}-->
               </div>
             </div>
           </div>
@@ -173,174 +317,5 @@ order: 2
 }
 }
 </route>
-<script setup lang="ts">
-import { ref, computed } from 'vue';
 
-// Denomination to currency mapping
-const denomMap: Record<string, string> = {
-  'ulava': 'LAVA',
-  'ibc/C09A0FFBA11313A32D42A58D820190E71E9D0D5AB3E841C0391EB9A623E07F4B': 'ATOM',
-};
-
-// Sample data (replace with actual data parsing)
-const validatorRewardsData = {
-  "info": [
-    {
-      "source": "iprpc_COSMOSHUB",
-      "amount": [
-        {
-          "denom": "ibc/C09A0FFBA11313A32D42A58D820190E71E9D0D5AB3E841C0391EB9A623E07F4B",
-          "amount": "2076.963530339260831345"
-        }
-      ]
-    },
-    {
-      "source": "iprpc_COSMOSHUBT",
-      "amount": [
-        {
-          "denom": "ibc/C09A0FFBA11313A32D42A58D820190E71E9D0D5AB3E841C0391EB9A623E07F4B",
-          "amount": "518.574320325073535358"
-        }
-      ]
-    },
-    {
-      "source": "subscriptions",
-      "amount": [
-        {
-          "denom": "ulava",
-          "amount": "13330.959895760936239371"
-        }
-      ]
-    },
-    {
-      "source": "blocks",
-      "amount": [
-        {
-          "denom": "ulava",
-          "amount": "18138106.364315048465081899"
-        }
-      ]
-    }
-  ],
-  "total": [
-    {
-      "denom": "ibc/C09A0FFBA11313A32D42A58D820190E71E9D0D5AB3E841C0391EB9A623E07F4B",
-      "amount": "2595.537850664334366703"
-    },
-    {
-      "denom": "ulava",
-      "amount": "18151437.324210809401321270"
-    }
-  ]
-}
-const providerRewardsData = {
-  "info": [
-    {
-      "source": "iprpc",
-      "amount": [
-        {
-          "denom": "ibc/C09A0FFBA11313A32D42A58D820190E71E9D0D5AB3E841C0391EB9A623E07F4B",
-          "amount": "3911090.567200057098000000"
-        }
-      ]
-    },
-    {
-      "source": "subscriptions",
-      "amount": [
-        {
-          "denom": "ulava",
-          "amount": "5650294.910330429691720102"
-        }
-      ]
-    },
-    {
-      "source": "boost",
-      "amount": [
-        {
-          "denom": "ulava",
-          "amount": "30377929.610451429769720815"
-        }
-      ]
-    }
-  ],
-  "total": [
-    {
-      "denom": "ibc/C09A0FFBA11313A32D42A58D820190E71E9D0D5AB3E841C0391EB9A623E07F4B",
-      "amount": "3911090.567200057098000000"
-    },
-    {
-      "denom": "ulava",
-      "amount": "36028224.520781859461440917"
-    }
-  ]
-}
-
-// Function to parse rewards data
-const parseRewardsData = (data: any, rewardType: string) => {
-  const rewards = [];
-  data.info.forEach((item: any) => {
-    item.amount.forEach((amt: any) => {
-      const currency = denomMap[amt.denom] || amt.denom;
-      rewards.push({
-        type: item.source,
-        amount: parseFloat(amt.amount),
-        currency,
-        rewardType, // 'Validator' or 'Provider'
-        usdValue: 0, // We'll calculate this later
-      });
-    });
-  });
-  return rewards;
-};
-
-// Parse rewards
-const validatorRewards = parseRewardsData(validatorRewardsData, 'Validator');
-const providerRewards = parseRewardsData(providerRewardsData, 'Provider');
-
-// Combine all rewards
-const rewards = ref([...validatorRewards, ...providerRewards]);
-
-// Compute total rewards per currency
-const totalRewards = computed(() => {
-  const totals: Record<string, number> = {};
-  rewards.value.forEach((reward) => {
-    if (!totals[reward.currency]) {
-      totals[reward.currency] = 0;
-    }
-    totals[reward.currency] += reward.amount;
-  });
-  return totals;
-});
-
-// Placeholder exchange rates (replace with actual rates)
-const exchangeRates: Record<string, number> = {
-  'LAVA': 0.005, // Example: 1 LAVA = $0.005
-  'ATOM': 7.5,   // Example: 1 ATOM = $7.50
-};
-
-// Compute total USD value per currency
-const totalRewardsUSD = computed(() => {
-  const totals: Record<string, string> = {};
-  Object.keys(totalRewards.value).forEach((currency) => {
-    const amount = totalRewards.value[currency];
-    const usdValue = amount * (exchangeRates[currency] || 0);
-    totals[currency] = usdValue.toFixed(2);
-  });
-  return totals;
-});
-
-// Compute grand total USD value
-const grandTotalUSD = computed(() => {
-  let total = 0;
-  Object.keys(totalRewardsUSD.value).forEach((currency) => {
-    total += parseFloat(totalRewardsUSD.value[currency]);
-  });
-  return total.toFixed(2);
-});
-
-// Function to format numbers with commas
-const formatNumber = (num: number) => {
-  return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
-};
-</script>
 
