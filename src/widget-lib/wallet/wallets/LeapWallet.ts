@@ -24,7 +24,7 @@ export class LeapWallet implements AbstractWallet {
     constructor(arg: WalletArgument, registry: Registry) {
         this.chainId = arg.chainId || "cosmoshub"
         // @ts-ignore
-        if (!window.getOfflineSigner || !window.leap) {
+        if (!window.leap) {
             throw new Error('Please install Leap extension')
         }
         this.registry = registry
@@ -110,7 +110,7 @@ export class LeapWallet implements AbstractWallet {
         const signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON;
         const msgs = tx.messages.map((msg) => this.aminoTypes.toAmino(msg));
         const signDoc = makeSignDocAmino(msgs, tx.fee, tx.chainId, tx.memo, tx.signerData.accountNumber, tx.signerData.sequence);
-        
+
         // @ts-ignore
         // const offlineSigner = window.getOfflineSigner(this.chainId)
         const { signature, signed } = await this.signer.signAmino(tx.signerAddress, signDoc);

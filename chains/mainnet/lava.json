@@ -2,13 +2,13 @@
   "chain_name": "lava",
   "api": [
     {
-      "address": "https://lava-testnet-rest.mellifera.network",
+      "address": "https://lava-mainnet-rest.mellifera.network",
       "provider": "MELLIFERA"
     }
   ],
   "rpc": [
     {
-      "address": "https://lava-testnet-rpc.mellifera.network",
+      "address": "https://lava-mainnet-rpc.mellifera.network",
       "provider": "MELLIFERA"
     }
   ],
@@ -18,7 +18,8 @@
   "assets": [{
     "base": "ulava",
     "symbol": "lava",
-    "exponent": "6"
+    "exponent": "6",
+    "coingecko_id": "lava-network"
   }],
   "addr_prefix": "lava@",
   "theme_color": "#ce4747",
