@@ -173,6 +173,24 @@ export const useFormatter = defineStore('formatter', {
 
       return exponent;
     },
+    getDenomMetadata(denom: string) {
+      if (denom && denom.startsWith('ibc/')) {
+        if (this.ibcMetadata[denom.replace('ibc/', '')]) {
+          return {
+            ...this.ibcMetadata[denom.replace('ibc/', '')],
+            maxExponent: Math.max(...this.ibcMetadata[denom.replace('ibc/', '')].denom_units.map(x => x.exponent))
+          }
+        }
+      } else {
+        const asset = this.findGlobalAssetConfig(denom)
+        if (asset) {
+          return {
+            ...asset,
+            maxExponent: Math.max(...asset.denom_units.map(x => x.exponent))
+          }
+        }
+      }
+    },
     tokenDisplayDenom(denom?: string) {
       if (denom) {
         let asset: Asset | undefined;
@@ -260,7 +278,6 @@ export const useFormatter = defineStore('formatter', {
             this.fetchDenomMetadata(denom.replace('ibc/', ''))
           }
         }
-
         if (conf) {
           let unit = { exponent: 0, denom: '' };
           // find the max exponent for display

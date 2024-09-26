@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {ref, computed, onMounted, watch, type ComputedRef} from 'vue';
-import { useDebounceFn } from "@vueuse/core"
+import {computed, type ComputedRef, onMounted, ref, watch} from 'vue';
+import {useDebounceFn} from "@vueuse/core"
 import {useFormatter, useStakingStore, useTxDialog} from "@/stores";
 import {decimal2percent} from "@/widget-lib/utils/format";
-import { useBlockchain } from '@/stores/useBlockchain';
+import {useBlockchain} from '@/stores/useBlockchain';
 import BigNumber from "bignumber.js";
 import {useLavaSpecStore} from "@/stores/useLavaSpecStore";
 import {useLavaProvidersStore} from "@/stores/useProvidersStore";
@@ -14,14 +14,20 @@ let specChainId = ref('');
 let provider = ref(null);
 let providerCU = ref('');
 let amount = ref('');
+let amountUsd = ref('');
 let validator = ref('');
+let investedUsd = ref(0);
 let inactiveValidators = ref([]);
+let isAPY = ref(true);
 let loadingRewards = ref(false);
 let providers = ref([] as any[]);
+let totalProviderCUs = ref(0);
+let loadPerformance = ref(null as boolean | null);
 const dialog = useTxDialog();
 const lavaSpecStore = useLavaSpecStore()
 const blockchain = useBlockchain();
 const lavaProvidersStore = useLavaProvidersStore();
+const mode = computed(() => isAPY.value ? 'apy' : 'apr');
 async function fetchProviders(chainID: string) {
   await lavaProvidersStore.reloadProviders(chainID);
   const providerRes = await lavaProvidersStore.getActiveProviders(chainID);
@@ -31,10 +37,22 @@ async function fetchProviders(chainID: string) {
   } else {
     providers.value = providerRes;
   }
+  Promise.all(providerRes.map(async (p) => {
+    loadPerformance.value = true;
+    const cuData = await lavaProvidersStore.providerCus(chainID, p.address);
+    return cuData?.base_pay?.iprpc_cu ?? '0';
+  })).then((x) => {
+    totalProviderCUs.value = x.reduce((acc, val) => acc + Number(val), 0);
+    loadPerformance.value = false;
+  })
 }
 function showResult() {
   return amount.value && validator.value;
 }
+
+const providerPerformancePercent = computed(() => {
+  return (Number(providerCU.value) / totalProviderCUs.value) * 100;
+});
 const staking = useStakingStore();
 const listValidator: ComputedRef<
     {
@@ -65,8 +83,29 @@ onMounted(() => {
 const onAmountInput = useDebounceFn(() => {
   calculateRewards();
 }, 500)
+
+const  convertUSDtoLava = useDebounceFn(() => {
+  if (!amountUsd.value) {
+    amount.value = '';
+    return;
+  }
+  const lavaPrice = format.price('ulava');
+  amount.value = BigNumber(amountUsd.value).div(lavaPrice).toFixed(2).toString();
+  calculateRewards();
+}, 500);
+
+const convertLavaToUSD = useDebounceFn(() => {
+  if (!amount.value) {
+    amountUsd.value = '';
+    return;
+  }
+  const unitAmount  = BigNumber(Number(amount.value)).times(BigNumber(10).pow(6)).toString()
+  const amountUsdValue = format.tokenValueNumber({ denom: 'ulava', amount: unitAmount }).toFixed(2);
+  amountUsd.value = amountUsdValue.toString();
+  calculateRewards();
+}, 500);
 const parseRewardsData = (data: any, rewardType: string) => {
-  const rewards = [];
+  const rewards = [] as any[];
   data.info.forEach((item: any) => {
     item.amount.forEach((amt: any) => {
       const denom = amt.denom;
@@ -83,15 +122,72 @@ const parseRewardsData = (data: any, rewardType: string) => {
 };
 const rewards = ref([] as any[]);
 const totalRewards = computed(() => {
-  const totals: Record<string, BigNumber> = {};
+  const totals: Record<string, {
+    amountUSD: number,
+    amount: BigNumber,
+    apr: { income: number, amount: BigNumber, percent: number },
+    apy: { income: number, amount: BigNumber, percent: number },
+    itemPrice: number,
+    displayDenom: string
+  }> = {};
+
   rewards.value.forEach((reward) => {
     if (!totals[reward.denom]) {
-      totals[reward.denom] = BigNumber(0);
+      totals[reward.denom] = {
+        amountUSD: 0,
+        amount: BigNumber(0),
+        apr: { income: 0, amount: BigNumber(0), percent: 0 },
+        apy: { income: 0, amount: BigNumber(0), percent: 0 },
+        displayDenom: reward.displayDenom,
+        itemPrice: reward.itemPrice,
+      };
     }
-    totals[reward.denom] = BigNumber(totals[reward.denom]).plus(BigNumber(reward.amount));
+
+    const totalAmount = BigNumber(totals[reward.denom].amount).plus(BigNumber(reward.amount));
+    const totalAmountUSD = totals[reward.denom].amountUSD + Number(reward.usdValue);
+
+    totals[reward.denom] = {
+      amount: totalAmount,
+      amountUSD: totalAmountUSD,
+      apr: { income: 0, amount: BigNumber(0), percent: 0 },
+      apy: { income: 0, amount: BigNumber(0), percent: 0 },
+      itemPrice: reward.itemPrice,
+      displayDenom: reward.displayDenom,
+    };
+  });
+
+  // Calculate APR and APY
+  Object.entries(totals).forEach(([denom, total]) => {
+    const rate = total.amountUSD / Number(investedUsd.value);
+
+    // APR calculation
+    const aprPercent = rate * 12 * 100;
+    const incomeAPR = investedUsd.value * (aprPercent / 100);
+    const amountAPR = total.amount.times(12);
+
+    // APY calculation
+    const apyPercent = (Math.pow(1 + rate, 12) - 1) * 100;
+    const incomeAPY = investedUsd.value * (apyPercent / 100);
+    const denomMetadata = format.getDenomMetadata(denom);
+    const amountAPY = BigNumber(incomeAPY / total.itemPrice).times(BigNumber(10).pow(denomMetadata?.maxExponent || 6));
+
+    totals[denom] = {
+      ...total,
+      apr: {
+        income: incomeAPR,
+        amount: amountAPR,
+        percent: aprPercent,
+      },
+      apy: {
+        income: incomeAPY,
+        amount: amountAPY,
+        percent: apyPercent,
+      },
+    };
   });
   return totals;
 });
+
 async function calculateRewards() {
   if (!amount.value || !validator.value) {
     loadingRewards.value = false;
@@ -101,7 +197,8 @@ async function calculateRewards() {
     return;
   }
   loadingRewards.value = true;
-  const convertAmount = BigNumber(Number(amount.value)).times(BigNumber(10).pow(6)).toString() + 'ulava';
+  const unitAmount  = BigNumber(Number(amount.value)).times(BigNumber(10).pow(6)).toString()
+  const convertAmount = unitAmount + 'ulava';
   const validatorRewardsData = await blockchain.rpc.getEstimateValidatorRewards(validator.value, convertAmount);
   const validatorRewards = parseRewardsData(validatorRewardsData, 'Validator');
   if(provider.value && specChainId.value) {
@@ -120,24 +217,35 @@ async function calculateRewards() {
   }
   //pre load denoms
   rewards.value.forEach((reward) => {
-    format.tokenDisplayDenom(reward.denom);
+    format.price(format.tokenDisplayDenom(reward.denom) ?? '')
   });
-  setTimeout(() => {
-    loadingRewards.value = false;
-  }, 500);
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const rewardsUsd = rewards.value.map((reward) => {
+    return {
+      ...reward,
+      amountAnnual: BigNumber(reward.amount).times(12).toString(),
+      displayDenom: format.tokenDisplayDenom(reward.denom),
+      itemPrice: format.price(format.tokenDisplayDenom(reward.denom) ?? ''),
+      usdValue: format.tokenValueNumber({ denom: format.tokenDisplayDenom(reward.denom) ?? '', amount: reward.amount }),
+    };
+  });
+  const investedLavaUsd = format.tokenValueNumber({ denom: 'ulava', amount: unitAmount });
+
+  rewards.value = rewardsUsd;
+  investedUsd.value = investedLavaUsd;
+  loadingRewards.value = false;
 }
 
 const totalUsd = computed(() => {
   return Object.entries(totalRewards.value).reduce((acc, [denom, amount]) => {
-    if(denom.startsWith('ibc/')) {
-      denom = format.tokenDisplayDenom(denom) || denom;
-    }
-    if(denom) {
-      const usdValue = BigNumber(format.tokenValueNumber({amount: amount.toString(), denom}));
-      return acc.plus(usdValue);
-    }
-    return acc;
-
+    return acc.plus(amount[mode.value].income);
+  }, BigNumber(0)).toString();
+})
+const totalPercent = computed(() => {
+  return Object.entries(totalRewards.value).reduce((acc, [denom, amount]) => {
+    return acc.plus(amount[mode.value].percent);
   }, BigNumber(0)).toString();
 })
 
@@ -157,50 +265,63 @@ watch(specChainId, (current, prev) => {
 });
 </script>
 <template>
-
-  <div>
-    <div class="bg-base-100 rounded-sm p-4 mt-4 mb-4 shadow">
-      <h2 class="text-xl font-bold">Rewards calculator</h2>
+  <div class="container mx-auto p-6">
+    <!-- Rewards Calculator Header -->
+    <div class="bg-base-100 rounded-lg p-4 mt-4 mb-4 shadow text-center">
+      <h2 class="text-2xl font-bold">Rewards Calculator</h2>
     </div>
-    <div class="bg-base-100 rounded-sm p-4 mt-4 shadow">
 
-      <div>
-      <h3 class="text-lg font-bold">stake + restake = rewards</h3>
-      <div class="form-control">
-        <label class="label">
-          <span class="label-text">Amount</span>
-          <span>
-                  -
-              </span>
-        </label>
-        <label class="join">
+    <!-- Input Section -->
+    <div class="bg-base-100 rounded-lg p-4 mt-4 shadow">
+      <h3 class="text-lg font-bold mb-4">Stake + Restake = Rewards</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- LAVA Input -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">LAVA</span>
+          </label>
           <input
               v-model="amount"
-              @input="onAmountInput"
+              @input="convertLavaToUSD"
               type="number"
-              placeholder="Your amount"
-              class="input border border-gray-300 dark:border-gray-600 w-full join-item dark:text-white"
+              placeholder="Enter amount in LAVA"
+              class="input border border-gray-300 dark:border-gray-600 w-full dark:text-white"
           />
-        </label>
-      </div>
-      <div class="form-control">
+        </div>
+
+        <!-- USD Input -->
+        <div class="form-control">
           <label class="label">
-            <span class="label-text">Validator</span>
-            <a class="label-text" @click="loadInactiveValidators()"
-            >Show Inactive</a
-            >
+            <span class="label-text">USD</span>
           </label>
-          <select v-model="validator" class="select select-bordered dark:text-white" @change="calculateRewards()">
-            <option value="">Select a validator</option>
-            <option v-for="v in listValidator" :value="v.operator_address">
-              {{ v.description.moniker }} ({{
-                decimal2percent(v.commission.commission_rates.rate)
-              }}%)
-              <span v-if="v.status !== 'BOND_STATUS_BONDED'">x</span>
-            </option>
-          </select>
+          <input
+              v-model="amountUsd"
+              @input="convertUSDtoLava"
+              type="number"
+              placeholder="Enter amount in USD"
+              class="input border border-gray-300 dark:border-gray-600 w-full dark:text-white"
+          />
+        </div>
       </div>
-      <div class="form-control">
+
+      <!-- Validator Selection -->
+      <div class="form-control mt-4">
+        <label class="label">
+          <span class="label-text">Validator</span>
+          <a class="label-text cursor-pointer" @click="loadInactiveValidators()">Show Inactive</a>
+        </label>
+        <select v-model="validator" class="select select-bordered dark:text-white" @change="calculateRewards()">
+          <option value="">Select a validator</option>
+          <option v-for="v in listValidator" :value="v.operator_address">
+            {{ v.description.moniker }} ({{ decimal2percent(v.commission.commission_rates.rate) }}%)
+            <span v-if="v.status !== 'BOND_STATUS_BONDED'"> (Inactive)</span>
+          </option>
+        </select>
+      </div>
+
+      <!-- Chain Selection -->
+      <div class="form-control mt-4">
         <label class="label">
           <span class="label-text">Select chain</span>
         </label>
@@ -211,7 +332,9 @@ watch(specChainId, (current, prev) => {
           </option>
         </select>
       </div>
-      <div class="form-control" v-if="!providers.length">
+
+      <!-- Provider Selection -->
+      <div v-if="!providers.length" class="form-control mt-4">
         <label class="label">
           <span class="label-text">Select provider</span>
         </label>
@@ -219,10 +342,10 @@ watch(specChainId, (current, prev) => {
             :value="specChainId ? 'No providers found for this chain' : 'Select a chain first'"
             type="text"
             disabled
-            class="text-warning-600 dark!:text-red input border !border-gray-300 dark:!border-gray-600"
+            class="input text-warning-600 dark:text-red border !border-gray-300 dark:!border-gray-600"
         />
       </div>
-      <div class="form-control" v-if="specChainId && providers.length">
+      <div v-if="specChainId && providers.length" class="form-control mt-4">
         <label class="label">
           <span class="label-text">Select provider for restake</span>
         </label>
@@ -233,60 +356,69 @@ watch(specChainId, (current, prev) => {
           </option>
         </select>
       </div>
+
+      <!-- Compounding Option -->
+      <div class="flex items-center mt-4">
+        <input v-model="isAPY" type="checkbox" class="checkbox checkbox-primary mr-2" />
+        <label class="cursor-pointer dark:text-gray-400">Compounded</label>
       </div>
     </div>
-    <div v-if="showResult() && loadingRewards" class="bg-base-100 rounded-sm p-6 mt-4 shadow-lg text-center">
-      <span  class="loading loading-spinner w-16 h-16"></span>
+
+    <!-- Loading Spinner -->
+    <div v-if="showResult() && loadingRewards" class="bg-base-100 rounded-lg p-6 mt-4 shadow-lg text-center">
+      <span class="loading loading-spinner w-16 h-16"></span>
     </div>
+
+    <!-- Rewards Summary Section -->
     <div v-if="showResult() && !loadingRewards">
-      <!-- Rewards Summary Section -->
-      <div class="bg-base-100 rounded-sm p-6 mt-4 shadow-lg">
-        <div class="mb-6">
-          <h2 class="text-2xl font-bold text-center">Your Rewards</h2>
-          <p class="text-center text-gray-600 dark:text-gray-300">
-            A summary of all your <strong>estimated</strong> rewards for next <strong>month</strong> payout period.
-          </p>
+      <div class="bg-base-100 rounded-lg p-6 mt-4 shadow-lg">
+        <h2 class="text-2xl font-bold text-center mb-4">Your Estimated Rewards Summary</h2>
+        <div class="text-center mt-4">
+          <div class="text-3xl font-bold text-main mt-2 mb-2">
+            {{ formatNumber(Number(totalPercent)) }} % <span class="text-md">APR</span>
+          </div>
         </div>
 
         <!-- Total Rewards Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
           <div
-              v-for="(amount, denom) in totalRewards"
+              v-for="(item, denom) in totalRewards"
               :key="denom"
-              class="bg-white dark:bg-[#1f2937] rounded-lg shadow p-6"
+              class="bg-white dark:bg-gray-800 rounded-lg shadow p-4"
           >
             <div class="text-center">
-              <h3 class="text-xl font-medium text-gray-900 dark:text-white">
-<!--                {{ // item.denom }}-->
-               {{ format.tokenDisplayDenom(denom).toUpperCase() }}
-              </h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                Total Rewards
-              </p>
-            </div>
-            <div class="mt-4 text-center">
-              <div class="text-3xl font-bold text-main">
-                {{ format.formatToken( { amount: amount.toString(), denom}, false) }}
+              <div class="text-xl font-bold text-main">
+                {{ formatNumber(item[mode].percent) }} % APR
               </div>
-              <div class="text-md text-green-600 dark:text-green-400" v-if="format.tokenValue({denom: format.tokenDisplayDenom(denom), amount: amount.toString() }) !== '0'">
-                {{ filterNaN(format.tokenValue({denom: format.tokenDisplayDenom(denom), amount: amount.toString() })) }}$
+              <div class="text-3xl font-bold">
+                {{ format.formatToken({ amount: item[mode].amount.toString(), denom }) }}
+              </div>
+              <div class="text-md text-green-600 dark:text-green-400">
+                {{ formatNumber(item[mode].income) }} $
               </div>
             </div>
           </div>
         </div>
 
         <!-- Grand Total USD -->
-        <div class="mt-8 text-center">
+        <div class="text-center mt-8">
           <div v-if="formatNumber(Number(totalUsd)) !== '0'">
-            <h3 class="text-xl font-semibold">Total rewards USD</h3>
+            <h3 class="text-xl font-semibold">Total Rewards USD</h3>
             <div class="text-3xl font-bold text-main mt-2">
               {{ formatNumber(Number(totalUsd)) }} $
             </div>
           </div>
+
           <h3 v-if="providerCU" class="text-xl mt-4 font-semibold">Selected provider performance CU</h3>
           <div class="text-3xl font-bold text-main mt-2">
-            {{format.formatNumber(providerCU, '0,0')}}
+            {{ format.formatNumber(Number(providerCU), '0,0') }}
           </div>
+
+          <div class="text-md" v-if="providerPerformancePercent">
+            {{ format.formatNumber(Number(providerPerformancePercent), '0.[00]') }} %
+          </div>
+
+          <!-- Delegate & Restake Button -->
           <label for="lava_delegate" class="mt-6 btn !bg-primary text-white"
                  @click="dialog.open('lava_delegate', {
                    validator_address: validator,
@@ -294,18 +426,21 @@ watch(specChainId, (current, prev) => {
                    chain_id: specChainId
                  })">delegate & restake</label>
         </div>
-        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6 mb-6" role="alert">
+
+        <!-- Note Section -->
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6">
           <p class="font-bold">Please Note:</p>
           <p>
             The rewards displayed are <strong>estimated</strong> for the next month's payout period. Final results may change based on factors such as provider and validator operational status, the number of relays produced by the provider, and other variables. <strong>This estimation do not take into account provider performance</strong>
           </p>
         </div>
       </div>
-
-      <!-- Detailed Rewards Section -->
       <div class="bg-base-100 rounded-sm p-6 mt-4 shadow-lg">
         <h2 class="text-2xl font-bold mb-4">Detailed Rewards Breakdown</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Without compounding
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
           <div
               v-for="reward in rewards"
               :key="reward.type + reward.currency + reward.amount"
@@ -322,7 +457,7 @@ watch(specChainId, (current, prev) => {
               </div>
               <div class="text-right">
                 <div class="text-xl font-bold text-main">
-                  {{ format.formatToken( { amount: reward.amount.toString(), denom: reward.denom}) }}
+                  {{ format.formatToken({ amount: reward.amountAnnual.toString(), denom: reward.denom }) }}
                 </div>
               </div>
             </div>
@@ -332,6 +467,7 @@ watch(specChainId, (current, prev) => {
     </div>
   </div>
 </template>
+
 <route>
 {
 meta: {
