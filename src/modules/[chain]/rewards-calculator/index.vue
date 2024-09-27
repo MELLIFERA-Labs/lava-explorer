@@ -160,9 +160,9 @@ const totalRewards = computed(() => {
   Object.entries(totals).forEach(([denom, total]) => {
     const rate = BigNumber(total.amountUSD).div(investedUsd.value)
     // APR calculation
-    const aprPercent = BigNumber(rate).times(100).toNumber();
+    const aprPercent = rate.times(12).times(100).toNumber();
     // investedUsd.value * (aprPercent / 100);
-    const incomeAPR = BigNumber(investedUsd.value).times(aprPercent / 100);
+    const incomeAPR = BigNumber(investedUsd.value).times(BigNumber(aprPercent).div(100));
     const amountAPR = total.amount.times(12);
 
     // APY calculation
