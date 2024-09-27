@@ -50,7 +50,7 @@ function showResult() {
   return amount.value && validator.value;
 }
 
-const providerPerformancePercent = computed(() => {
+let providerPerformancePercent = computed(() => {
   return (Number(providerCU.value) / totalProviderCUs.value) * 100;
 });
 const staking = useStakingStore();
@@ -125,8 +125,8 @@ const totalRewards = computed(() => {
   const totals: Record<string, {
     amountUSD: number,
     amount: BigNumber,
-    apr: { income: number, amount: BigNumber, percent: number },
-    apy: { income: number, amount: BigNumber, percent: number },
+    apr: { income: BigNumber, amount: BigNumber, percent: number },
+    apy: { income: BigNumber, amount: BigNumber, percent: number },
     itemPrice: number,
     displayDenom: string
   }> = {};
@@ -136,8 +136,8 @@ const totalRewards = computed(() => {
       totals[reward.denom] = {
         amountUSD: 0,
         amount: BigNumber(0),
-        apr: { income: 0, amount: BigNumber(0), percent: 0 },
-        apy: { income: 0, amount: BigNumber(0), percent: 0 },
+        apr: { income: BigNumber(0), amount: BigNumber(0), percent: 0 },
+        apy: { income: BigNumber(0), amount: BigNumber(0), percent: 0 },
         displayDenom: reward.displayDenom,
         itemPrice: reward.itemPrice,
       };
@@ -149,8 +149,8 @@ const totalRewards = computed(() => {
     totals[reward.denom] = {
       amount: totalAmount,
       amountUSD: totalAmountUSD,
-      apr: { income: 0, amount: BigNumber(0), percent: 0 },
-      apy: { income: 0, amount: BigNumber(0), percent: 0 },
+      apr: { income: BigNumber(0), amount: BigNumber(0), percent: 0 },
+      apy: { income: BigNumber(0), amount: BigNumber(0), percent: 0 },
       itemPrice: reward.itemPrice,
       displayDenom: reward.displayDenom,
     };
@@ -158,18 +158,20 @@ const totalRewards = computed(() => {
 
   // Calculate APR and APY
   Object.entries(totals).forEach(([denom, total]) => {
-    const rate = total.amountUSD / Number(investedUsd.value);
-
+    const rate = BigNumber(total.amountUSD).div(investedUsd.value)
     // APR calculation
-    const aprPercent = rate * 12 * 100;
-    const incomeAPR = investedUsd.value * (aprPercent / 100);
+    const aprPercent = BigNumber(rate).times(100).toNumber();
+    // investedUsd.value * (aprPercent / 100);
+    const incomeAPR = BigNumber(investedUsd.value).times(aprPercent / 100);
     const amountAPR = total.amount.times(12);
 
     // APY calculation
-    const apyPercent = (Math.pow(1 + rate, 12) - 1) * 100;
-    const incomeAPY = investedUsd.value * (apyPercent / 100);
+    // (Math.pow(1 + rate, 12) - 1) * 100
+    const apyPercent = BigNumber(BigNumber(rate).plus(1)).pow(12).minus(1).times(100).toNumber();
+    const incomeAPY = BigNumber(investedUsd.value).times(apyPercent / 100);
     const denomMetadata = format.getDenomMetadata(denom);
-    const amountAPY = BigNumber(incomeAPY / total.itemPrice).times(BigNumber(10).pow(denomMetadata?.maxExponent || 6));
+    // incomeAPY / total.itemPrice
+    const amountAPY = BigNumber(BigNumber(incomeAPY).div(total.itemPrice)).times(BigNumber(10).pow(denomMetadata?.maxExponent || 6));
 
     totals[denom] = {
       ...total,
@@ -192,6 +194,9 @@ async function calculateRewards() {
   if (!amount.value || !validator.value) {
     loadingRewards.value = false;
     return;
+  }
+  if(!provider.value) {
+    providerCU.value = '';
   }
   if(provider.value === null && specChainId.value) {
     return;
@@ -394,7 +399,7 @@ watch(specChainId, (current, prev) => {
                 {{ format.formatToken({ amount: item[mode].amount.toString(), denom }) }}
               </div>
               <div class="text-md text-green-600 dark:text-green-400">
-                {{ formatNumber(item[mode].income) }} $
+                {{ formatNumber(item[mode].income.toNumber()) }} $
               </div>
             </div>
           </div>
@@ -431,7 +436,7 @@ watch(specChainId, (current, prev) => {
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6">
           <p class="font-bold">Please Note:</p>
           <p>
-            The rewards displayed are <strong>estimated</strong> for the next month's payout period. Final results may change based on factors such as provider and validator operational status, the number of relays produced by the provider, and other variables. <strong>This estimation do not take into account provider performance</strong>
+            The rewards displayed are <strong>estimated</strong> annual rewards. Final results may change based on factors such as provider and validator operational status, the number of relays produced by the provider, and other variables. <strong>This estimation do not take into account provider performance</strong>
           </p>
         </div>
       </div>
