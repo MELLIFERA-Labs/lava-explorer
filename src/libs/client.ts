@@ -40,7 +40,7 @@ function registeCustomRequest() {
     }
   });
 }
-    
+
 registeCustomRequest()
 
 export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
@@ -364,6 +364,9 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   async getProviderChains(address: string) {
     return this.request({url: "/lavanet/lava/pairing/provider/{address}/", adapter} as Request<{stakeEntries: any}>, { address });
   }
+  async getProvidersCUs(chainID: string, provider: string) {
+    return this.request({url: `/lavanet/lava/rewards/SpecTrackedInfo/${chainID}/${provider}`, adapter} as Request<{info: any[]}>, { chainID, provider });
+  }
   async getLavaSpecByChainID(chainID: string) {
     return this.request({url: "/lavanet/lava/spec/spec/{chainID}", adapter} as Request<{Spec: any}>, { chainID });
   }
@@ -375,5 +378,11 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   }
   async getEpochDetails() {
     return this.request({url: "/lavanet/lava/epochstorage/epoch_details", adapter} as Request<{EpochDetails: any}>, {});
+  }
+  async getEstimateValidatorRewards(address: string, amount: string) {
+    return this.request({url: "/lavanet/lava/subscription/estimated_validator_rewards/{address}/{amount}", adapter} as Request<{rewards: any}>, { address, amount });
+  }
+  async getEstimateProviderRewards(address: string, chainID: string, amount: string) {
+    return this.request({url: "/lavanet/lava/subscription/estimated_rewards/{address}/{chainID}/{amount}", adapter} as Request<{rewards: any}>, { address, chainID, amount });
   }
 }

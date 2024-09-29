@@ -2,13 +2,13 @@
   "chain_name": "lava",
   "api": [
     {
-      "address": "https://lava-mainnet-rest.mellifera.network",
+      "address": "https://lava.rest.lava.build:443",
       "provider": "MELLIFERA"
     }
   ],
   "rpc": [
     {
-      "address": "https://lava-mainnet-rpc.mellifera.network",
+      "address": "https://lava.tendermintrpc.lava.build:443",
       "provider": "MELLIFERA"
     }
   ],
@@ -17,16 +17,30 @@
   "min_tx_fee": "800",
   "assets": [{
     "base": "ulava",
-    "symbol": "lava",
+    "symbol": "LAVA",
     "exponent": "6",
     "coingecko_id": "lava-network"
   }],
+  "lava_iprpc_assets": [
+    {
+      "base": "uatom",
+      "symbol": "ATOM",
+      "exponent": "6",
+      "coingecko_id": "cosmos"
+    }
+  ],
   "addr_prefix": "lava@",
   "theme_color": "#ce4747",
   "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75",
   "lava_specs_meta": {
-    "LAV1": {
+    "LAVA": {
       "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75"
+    },
+    "COSMOSHUB": {
+        "logo": "https://ping.pub/logos/cosmos.svg"
+     },
+    "COSMOSHUBT": {
+        "logo": "https://ping.pub/logos/cosmos.svg"
     }
   },
   "disabled_specs": [

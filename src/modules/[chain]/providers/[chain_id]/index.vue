@@ -19,6 +19,7 @@ const staking = useStakingStore();
 const dialog = useTxDialog();
 const cache = JSON.parse(localStorage.getItem('providers-avatars') || '{}');
 const avatars = ref(cache || {});
+const providersCUs = ref({} as any);
 const loadAvatar = (identity: string) => {
   // fetches avatar from keybase and stores it in localStorage
   fetchAvatar(identity).then(() => {
@@ -44,9 +45,31 @@ const loadAvatars = () => {
   );
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await lavaProvidersStore.reloadProviders(chainId);
   lavaProvidersStore.getActiveProviders(chainId).then((p) => {
     activeProviders.value = p;
+    return p;
+  }).then((ps) => {
+    ps.forEach((p: any) => {
+      providersCUs.value[p.address] = {
+        loading: true,
+        cuInfo: 0,
+      };
+      lavaProvidersStore.providerCus(chainId, p.address)
+        .then((d) => {
+          providersCUs.value[p.address] = {
+            loading: false,
+            cuInfo: d,
+          };
+        })
+        .catch(() => {
+          providersCUs.value[p.address] = {
+            loading: false,
+            cuInfo: 0,
+          };
+        });
+    });
   });
   lavaProvidersStore.getFrozenProviders(chainId).then((p) => {
     frozenProviders.value = p;
@@ -247,6 +270,7 @@ watch(activeProviders, (newValue: any) => {
               <th scope="col" class="text-right uppercase">
                 Total stake / Self stake
               </th>
+              <th scope="col" class="text-right uppercase">Approx.performance CU</th>
               <th scope="col" class="text-right uppercase">Delegation limit</th>
               <th scope="col" class="text-right uppercase">
                 {{ $t('staking.commission') }}
@@ -358,7 +382,10 @@ watch(activeProviders, (newValue: any) => {
                   >
                 </div>
               </td>
-              <!-- 👉 Delegate limit -->
+            <td class="text-right text-xs">
+             <span v-if="providersCUs[provider.address]">{{ format.formatNumber(providersCUs[provider.address]?.cuInfo?.base_pay?.iprpc_cu, '0,0') }}</span>
+            </td>
+            <!-- 👉 Delegate limit -->
               <td class="text-right text-xs">
                 {{
                   format.formatToken(

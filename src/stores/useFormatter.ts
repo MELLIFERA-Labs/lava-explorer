@@ -72,7 +72,7 @@ export const useFormatter = defineStore('formatter', {
       return trace;
     },
     async fetchDenomMetadata(denom: string) {
-      if(this.loading.includes(denom)) return 
+      if(this.loading.includes(denom)) return
       this.loading.push(denom)
       const asset = await get(`https://metadata.ping.pub/metadata/${denom}`) as Asset
       this.ibcMetadata[denom] = asset
@@ -127,7 +127,7 @@ export const useFormatter = defineStore('formatter', {
       if(!token || !token.denom) return 0
 
       // find the symbol
-      const symbol = this.dashboard.coingecko[token.denom]?.symbol || token.denom 
+      const symbol = this.dashboard.coingecko[token.denom]?.symbol || token.denom
       // convert denomination to symbol
       const exponent = this.dashboard.coingecko[symbol?.toLowerCase()]?.exponent || this.specialDenom(token.denom);
       // caculate amount of symbol
@@ -147,7 +147,7 @@ export const useFormatter = defineStore('formatter', {
     formatToken2(token: { denom: string; amount: string }, withDenom = true) {
       return this.formatToken(token, true, '0,0.[00]');
     },
-    
+
     findGlobalAssetConfig(denom: string) {
       const chains = Object.values(this.dashboard.chains)
       for ( let i =0; i < chains.length; i++ ) {
@@ -173,6 +173,24 @@ export const useFormatter = defineStore('formatter', {
 
       return exponent;
     },
+    getDenomMetadata(denom: string) {
+      if (denom && denom.startsWith('ibc/')) {
+        if (this.ibcMetadata[denom.replace('ibc/', '')]) {
+          return {
+            ...this.ibcMetadata[denom.replace('ibc/', '')],
+            maxExponent: Math.max(...this.ibcMetadata[denom.replace('ibc/', '')].denom_units.map(x => x.exponent))
+          }
+        }
+      } else {
+        const asset = this.findGlobalAssetConfig(denom)
+        if (asset) {
+          return {
+            ...asset,
+            maxExponent: Math.max(...asset.denom_units.map(x => x.exponent))
+          }
+        }
+      }
+    },
     tokenDisplayDenom(denom?: string) {
       if (denom) {
         let asset: Asset | undefined;
@@ -197,7 +215,7 @@ export const useFormatter = defineStore('formatter', {
             if (x.exponent >= unit.exponent) {
               unit = x;
             }
-          });          
+          });
           return unit.denom;
         }
         return denom;
@@ -260,7 +278,6 @@ export const useFormatter = defineStore('formatter', {
             this.fetchDenomMetadata(denom.replace('ibc/', ''))
           }
         }
-
         if (conf) {
           let unit = { exponent: 0, denom: '' };
           // find the max exponent for display
@@ -277,7 +294,7 @@ export const useFormatter = defineStore('formatter', {
         if(amount < 0.000001) {
           return `0 ${denom.substring(0, 10)}`;
         }
-        if(amount < 0.01) {
+        if(amount < 0.09) {
           fmt = '0.[000000]'
         }
         return `${numeral(amount).format(fmt)} ${
