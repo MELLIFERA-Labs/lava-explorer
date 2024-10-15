@@ -41,6 +41,18 @@
      },
     "COSMOSHUBT": {
         "logo": "https://ping.pub/logos/cosmos.svg"
+    },
+    "STRGZ": {
+        "logo": "https://ping.pub/logos/stargaze.svg"
+    },
+    "STRGZT": {
+      "logo": "https://ping.pub/logos/stargaze.svg"
+    },
+    "EVMOST": {
+      "logo": "https://ping.pub/logos/evmos.png"
+    },
+    "EVMOS": {
+        "logo": "https://ping.pub/logos/evmos.png"
     }
   },
   "disabled_specs": [
@@ -48,6 +60,10 @@
     "COSMOSSDK",
     "COSMOSWASM",
     "IBC",
-    "TENDERMINT"
+    "TENDERMINT",
+    "HOL1",
+    "ETH1",
+    "SEP1",
+    "ETHERMINT"
   ]
 }
