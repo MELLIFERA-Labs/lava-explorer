@@ -635,7 +635,6 @@ function mapAmount(
           <thead>
             <tr>
               <th class="py-3">Provider</th>
-              <th class="py-3">CHAIN_ID</th>
               <th class="py-3">{{ $t('account.delegation') }}</th>
               <th class="py-3">{{ $t('account.rewards') }}</th>
               <th class="py-3">{{ $t('account.action') }}</th>
@@ -655,14 +654,9 @@ function mapAmount(
             >
               <td class="text-caption text-primary py-3">
                 <RouterLink
-                  :to="`/${chain}/providers/${p.chainID}/${p.provider}`"
+                  :to="`/${chain}/providers/provider/${p.provider}`"
                   >{{ getProviderName(p.provider) }}</RouterLink
                 >
-              </td>
-              <td class="text-caption text-primary py-3">
-                <RouterLink :to="`/${chain}/providers/${p.chainID}`">{{
-                  p.chainID
-                }}</RouterLink>
               </td>
               <td class="py-3">
                 {{ format.formatToken(p.amount, true, '0,0.[00]') }}

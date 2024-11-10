@@ -3,15 +3,13 @@ import {computed, type ComputedRef, type PropType, ref, watch} from 'vue';
 import {
   getActiveValidators,
   getInactiveValidators,
-  getProviders,
+  getProvidersMetadata,
   getSpecs,
   getStakingParam
 } from '../../../utils/http';
 import type {Coin, CoinMetadata} from '../../../utils/type';
 import {TokenUnitConverter} from '../../../utils/TokenUnitConverter';
-import {useRouter} from 'vue-router';
 import {decimal2percent} from "@/widget-lib/utils/format";
-const router = useRouter();
 const props = defineProps({
   endpoint: { type: String, required: true },
   sender: { type: String, required: true },
@@ -27,10 +25,9 @@ const activeValidators = ref([]);
 const inactiveValidators = ref([]);
 
 const provider = ref('');
-const specChainId = ref('');
+
 
 const providers = ref([] as any[]);
-const specs = ref([] as any[]);
 const stakingDenom = ref('');
 const unbondingTime = ref('');
 const amount = ref('');
@@ -44,7 +41,7 @@ const msgs = computed(() => {
         creator: props.sender,
         validator: validator.value,
         provider: provider.value,
-        chainID: specChainId.value,
+        chainID: '*',
         amount: convert.displayToBase(stakingDenom.value, {
           amount: String(amount.value),
           denom: amountDenom.value,
@@ -100,10 +97,7 @@ const isValid = computed(() => {
     ok = false;
     error = 'Validator is empty';
   }
-  if(!specChainId.value) {
-    ok = false;
-    error = 'Chain ID is empty';
-  }
+ 
   if (!provider.value) {
     ok = false;
     error = 'Provider is empty';
@@ -120,32 +114,11 @@ const isValid = computed(() => {
 });
 function matchMoniker(p: any) {
   return p?.description?.moniker?.trim()?.toLowerCase()?.includes('mellifera')
-      || p?.moniker?.trim()?.toLowerCase()?.includes('mellifera');
 }
-function fetchProviders(chainID: string) {
-  getProviders(props.endpoint, chainID).then((x) => {
-    providers.value = x.stakeEntry;
-    if(!params.value.provider_address) {
-      provider.value = x.stakeEntry.find(matchMoniker)?.address;
-    }
-  });
-}
-watch(specChainId, (current,prev) => {
-  if(!params.value.chain_id) {
-    provider.value = '';
-  } else if (current !== params.value.chain_id) {
-    provider.value = '';
-  }
-  if (current) {
-    fetchProviders(current);
-  } else {
-    providers.value = [];
-  }
-});
+
 function initial() {
   providers.value = [];
   provider.value = params.value.provider_address;
-  specChainId.value = params.value.chain_id;
   validator.value = params.value.validator_address;
   getActiveValidators(props.endpoint).then((x) => {
     activeValidators.value = x.validators;
@@ -155,17 +128,21 @@ function initial() {
       )?.operator_address;
     }
   });
-  if(specChainId.value){
-    fetchProviders(specChainId.value);
-  }
+  getProvidersMetadata(props.endpoint).then((x) => {
+    providers.value = x.MetaData;
+    if(!params.value.provider_address) {
+      provider.value = x.MetaData.find(matchMoniker)?.provider;
+    }
+  });
   getStakingParam(props.endpoint).then((x) => {
     stakingDenom.value = x.params.bond_denom;
     unbondingTime.value = x.params.unbonding_time;
   });
-  getSpecs(props.endpoint).then((x) => {
-    specs.value = x.chainInfoList;
-  });
 }
+const validatedChains = computed(() => {
+  const selectedProvider = providers.value.find((p) => p.provider === provider.value);
+  return selectedProvider ? selectedProvider.chains : [];
+});
 
 defineExpose({ msgs, isValid, initial });
 </script>
@@ -200,35 +177,14 @@ defineExpose({ msgs, isValid, initial });
     </div>
     <div class="form-control">
       <label class="label">
-        <span class="label-text">Select chain</span>
-      </label>
-      <select v-model="specChainId" class="select select-bordered dark:text-white">
-        <option value="">--</option>
-        <option v-for="s in specs" :value="s.chainID">
-          {{ s.chainName }} - {{ s.chainID }}
-        </option>
-      </select>
-    </div>
-    <div class="form-control" v-if="!providers.length">
-      <label class="label">
         <span class="label-text">Select provider</span>
       </label>
-      <input
-          :value="specChainId ? 'No providers found for this chain' : 'Select a chain first'"
-          type="text"
-          disabled
-          class="text-warning-600 dark!:text-red input border !border-gray-300 dark:!border-gray-600"
-      />
-    </div>
-    <div class="form-control" v-if="specChainId && providers.length">
-      <label class="label">
-        <span class="label-text">Select provider</span>
-      </label>
+      
       <select v-model="provider" class="select select-bordered dark:text-white">
         <option value="">--</option>
-        <option v-for="p in providers" :value="p.address">
-          {{ p.moniker || p.description?.moniker || p.address }} ({{ p.delegate_commission }}%)
-        </option>
+        <option v-for="p in providers" :value="p.provider">
+         {{ p.moniker || p.description?.moniker || p.address }}   {{ p.chains.length }} Services | {{ p.delegate_commission }}% Commision
+         </option>
       </select>
     </div>
 
@@ -251,5 +207,19 @@ defineExpose({ msgs, isValid, initial });
         </select>
       </label>
     </div>
+     <!-- Display Validated Chains -->
+     <div v-if="validatedChains.length > 0" class="mt-4">
+      <h3 class="font-bold mb-2 label-text">Chains provided by Selected Provider:</h3>
+      <div class="flex flex-wrap gap-2">
+        <span
+          v-for="chain in validatedChains"
+          :key="chain"
+          class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium border border-blue-200 shadow-sm"
+        >
+          {{ chain }}
+        </span>
+      </div>
+    </div>
   </div>
+
 </template>

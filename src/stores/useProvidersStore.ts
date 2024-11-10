@@ -67,6 +67,7 @@ export const useLavaProvidersStore = defineStore('providersStore', {
       }
       return this.allProviders;
     },
+    // todo: should we remove this?
     async getProviderByAddress(address: string, chainName: string) {
       await this.ensureLatestHeight();
       const providersResponse = await this.getAllProviders(chainName);
@@ -82,6 +83,11 @@ export const useLavaProvidersStore = defineStore('providersStore', {
         providerWithTotalStake
       );
       return providerWithTotalStake;
+    },
+    async getProviderMetadata(address: string) {
+      const metadata = await this.blockchain.rpc?.getProviderMetadata(address);
+      const [ providerMetadata ] = metadata.MetaData;
+      return providerMetadata; 
     },
     async getProviderChains(address: string) {
       await this.ensureLatestHeight();

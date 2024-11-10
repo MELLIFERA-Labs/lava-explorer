@@ -399,7 +399,6 @@ const amount = computed({
           <thead>
           <tr>
             <th>Provider</th>
-            <th>CHAIN_ID</th>
             <th>{{ $t('account.delegation') }}</th>
             <th>{{ $t('account.rewards') }}</th>
             <th>{{ $t('account.action') }}</th>
@@ -408,16 +407,11 @@ const amount = computed({
           <tbody>
           <tr v-for="(item, index) in walletStore.providerDelegations" :key="index">
             <td>
-              <RouterLink class="link link-primary no-underline" :to="`/${chain}/providers/${item.chainID}/${item.provider}`">
+              <RouterLink class="link link-primary no-underline" :to="`/${chain}/providers/provider/${item.provider}`">
                 {{
                  walletStore.getProviderName(item?.provider)
                 }}
               </RouterLink>
-            </td>
-            <td>
-            <RouterLink class="link link-primary no-underline" :to="`/${chain}/providers/${item.chainID}`">{{
-                item.chainID
-              }}</RouterLink>
             </td>
             <td>{{ format.formatToken(item.amount, true, '0,0.[00]') }}</td>
             <td>

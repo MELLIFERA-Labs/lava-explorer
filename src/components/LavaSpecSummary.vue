@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { useDashboard } from '@/stores/useDashboard';
-import { computed } from 'vue';
 import { Icon } from '@iconify/vue';
 
 const props = defineProps({
@@ -24,7 +23,7 @@ const addFavor = (e: Event) => {
 </script>
 <template>
   <RouterLink
-      :to="`providers/${spec.chainID}`"
+      :to="`providers/chain/${spec.chainID}`"
       class="bg-base-10 0 hover:bg-gray-100 dark:hover:bg-[#373f59] rounded shadow flex items-center px-3 py-3 cursor-pointer"
   >
     <div class="w-8 h-8  rounded-full overflow-hidden">

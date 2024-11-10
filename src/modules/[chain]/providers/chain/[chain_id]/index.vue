@@ -124,9 +124,6 @@ const list = computed(() => {
   }
   return frozenProviders.value;
 });
-const underDevelopmentAlert = () => {
-  alert('Under development!');
-};
 
 watch(activeProviders, (newValue: any) => {
   if (newValue.length > 0) {
@@ -271,7 +268,6 @@ watch(activeProviders, (newValue: any) => {
                 Total stake / Self stake
               </th>
               <th scope="col" class="text-right uppercase">Approx.performance CU</th>
-              <th scope="col" class="text-right uppercase">Delegation limit</th>
               <th scope="col" class="text-right uppercase">
                 {{ $t('staking.commission') }}
               </th>
@@ -335,7 +331,7 @@ watch(activeProviders, (newValue: any) => {
                     >
                       <RouterLink
                         :to="{
-                          name: 'chain-providers-chain_id-provider',
+                          name: 'chain-providers-provider-provider',
                           params: {
                             provider: provider.address,
                           },
@@ -385,21 +381,6 @@ watch(activeProviders, (newValue: any) => {
             <td class="text-right text-xs">
              <span v-if="providersCUs[provider.address]">{{ format.formatNumber(providersCUs[provider.address]?.cuInfo?.base_pay?.iprpc_cu, '0,0') }}</span>
             </td>
-            <!-- 👉 Delegate limit -->
-              <td class="text-right text-xs">
-                {{
-                  format.formatToken(
-                    {
-                      amount: parseInt(
-                        provider.delegate_limit.amount
-                      ).toString(),
-                      denom: staking.params.bond_denom,
-                    },
-                    true,
-                    '0,0'
-                  )
-                }}
-              </td>
               <!-- 👉 commission -->
               <td class="text-right text-xs">
                 {{ provider.delegate_commission }}%

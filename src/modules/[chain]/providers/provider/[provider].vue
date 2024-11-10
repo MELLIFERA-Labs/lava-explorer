@@ -17,9 +17,8 @@ let showCopyToast = ref(0);
 const format = useFormatter();
 const staking = useStakingStore();
 const lavaProvidersStore = useLavaProvidersStore();
-import { useRoute } from 'vue-router';
-const route = useRoute();
 const dialog = useTxDialog();
+import Popper from 'vue3-popper';
 const copyWebsite = async (url: string) => {
   if (!url) {
     return;
@@ -83,7 +82,12 @@ const logo = (identity?: string) => {
     ? url
     : `https://s3.amazonaws.com/keybase_processed_uploads/${url}`;
 };
-
+const jailTime = (p: any) => {
+  if (p.jailed === true) {
+    return `(${dayjs.unix(p.jail_end_time).fromNow()})`;
+  }
+  return '';
+};
 const loadAvatar = (identity: string) => {
   // fetches avatar from keybase and stores it in localStorage
   fetchAvatar(identity).then(() => {
@@ -91,9 +95,9 @@ const loadAvatar = (identity: string) => {
   });
 };
 onMounted(() => {
-  if (provider && lavaChainId) {
+  if (provider) {
     lavaProvidersStore
-      .getProviderByAddress(provider, lavaChainId)
+      .getProviderMetadata(provider)
       .then((res) => {
         p.value = res;
         identity.value = res.description?.identity || '';
@@ -108,11 +112,6 @@ onMounted(() => {
 </script>
 <template>
   <div>
-    <div
-        class="bg-base-100 rounded-lg grid sm:grid-cols-1 md:grid-cols-4 p-4 mb-1"
-    >
-      <span>Chain ID: {{props.chain_id}}</span>
-    </div>
     <div class="bg-base-100 px-4 pt-3 pb-4 rounded shadow border-indigo-500">
       <div class="flex flex-col lg:!flex-row pt-2 pb-1">
         <div class="flex-1">
@@ -120,21 +119,13 @@ onMounted(() => {
             <div class="avatar mr-4 relative w-24 rounded-lg overflow-hidden">
               <div class="w-24 rounded-lg absolute opacity-10"></div>
               <div class="w-24 rounded-lg">
-                <img
-                  v-if="identity && avatars[identity] !== 'undefined'"
-                  v-lazy="logo(identity)"
-                  class="object-contain"
+                <img v-if="identity && avatars[identity] !== 'undefined'" v-lazy="logo(identity)" class="object-contain"
                   @error="
                     (e) => {
                       loadAvatar(identity);
                     }
-                  "
-                />
-                <Icon
-                  v-else
-                  class="text-8xl"
-                  :icon="`mdi-help-circle-outline`"
-                />
+                  " />
+                <Icon v-else class="text-8xl" :icon="`mdi-help-circle-outline`" />
               </div>
             </div>
             <div class="mx-2">
@@ -142,12 +133,8 @@ onMounted(() => {
               <div class="text-sm mb-4">
                 {{ p.description?.identity || '-' }}
               </div>
-              <label
-                for="lava_restake"
-                class="btn btn-primary btn-sm w-full"
-                @click="dialog.open('lava_restake', { provider_address: p.address, chain_id: lavaChainId })"
-                >restake</label
-              >
+              <label for="lava_restake" class="btn btn-primary btn-sm w-full"
+                @click="dialog.open('lava_restake', { provider_address: p.provider })">restake</label>
             </div>
           </div>
           <div class="m-4 text-sm">
@@ -155,30 +142,22 @@ onMounted(() => {
             <div class="card-list">
               <div class="flex items-center mb-2">
                 <Icon icon="mdi-web" class="text-xl mr-1" />
-                <span class="font-bold mr-2"
-                  >{{ $t('staking.website') }}:
+                <span class="font-bold mr-2">{{ $t('staking.website') }}:
                 </span>
-                <a
-                  :href="p?.description?.website || '#'"
-                  :class="
+                <a :href="p?.description?.website || '#'" :class="
                     p?.description?.website
                       ? 'cursor-pointer'
                       : 'cursor-default'
-                  "
-                >
+                  ">
                   {{ p?.description?.website || '-' }}
                 </a>
               </div>
               <div class="flex items-center">
                 <Icon icon="mdi-email-outline" class="text-xl mr-1" />
-                <span class="font-bold mr-2"
-                  >{{ $t('staking.contact') }}:
+                <span class="font-bold mr-2">{{ $t('staking.contact') }}:
                 </span>
-                <a
-                  v-if="p.description?.security_contact"
-                  :href="'mailto:' + p.description?.security_contact || '#'"
-                  class="cursor-pointer"
-                >
+                <a v-if="p.description?.security_contact" :href="'mailto:' + p.description?.security_contact || '#'"
+                  class="cursor-pointer">
                   {{ p.description?.security_contact || '-' }}
                 </a>
               </div>
@@ -187,112 +166,69 @@ onMounted(() => {
               {{ $t('staking.validator_status') }}
             </p>
             <div class="card-list">
-              <div class="flex items-center mb-2">
-                <Icon icon="mdi-shield-alert-outline" class="text-xl mr-1" />
-                <span class="font-bold mr-2">{{ $t('staking.jailed') }}: </span>
-                <span :class="p.jailed === true ? 'text-error' : ''">
-                  {{
-                    p.jailed === true
-                      ? dayjs.unix(p.jail_end_time).fromNow()
-                      : '-'
-                  }}
-                </span>
-              </div>
-              <div class="flex items-center">
-                <Icon icon="mdi-information-outline" class="text-xl mr-1" />
-                <span class="font-bold mr-2">Status: </span>
-                <span :class="statusClass(p.status)">
-                  {{
-                    p?.status?.toUpperCase()
-                  }}
-                </span>
-              </div>
+            <div class="flex items-center mb-2">
+              <Icon icon="mdi-shield-alert-outline" class="text-xl mr-1" />
+              <span class="font-bold mr-2">Security: </span>
+                <!-- Security Status Indicator -->
+                <span :class="p.provider === p.vault ? 'text-error' : 'text-success'">
+                {{ p.provider === p.vault ? 'LOW' : 'HIGH' }}
+              </span>
+
+              <!-- Question Icon with Custom Tooltip Content -->
+              <Popper
+                arrow
+                placement="right"
+                hover
+              >
+                <template #default>
+                  <Icon icon="mdi-help-circle-outline" class="text-white cursor-pointer ml-1" />
+                </template>
+                <template #content>
+                  <div class="tooltip-content">
+                    {{ p.provider === p.vault 
+                        ? 'Vault and provider addresses are the same, which reduces security because it increases the risk of lose providers funds' 
+                        : 'Vault and provider addresses are different, ensuring higher security'
+                    }}
+                  </div>
+                </template>
+              </Popper>
+
+            
             </div>
           </div>
+          </div>
         </div>
-        <div class="flex-1">
+        <!-- <div class="flex-1">
           <div class="flex flex-col mt-10">
             <div class="flex mb-2">
-              <div
-                class="flex items-center justify-center rounded w-10 h-10"
-                style="border: 1px solid #666"
-              >
+              <div class="flex items-center justify-center rounded w-10 h-10" style="border: 1px solid #666">
                 <Icon icon="mdi-coin" class="text-3xl" />
               </div>
               <div class="ml-3 flex flex-col justify-center">
-                <h4 v-if="p.total_stake">
+                <h4 v-if="p.total_delegations">
                   {{
-                    format.formatToken(
-                      {
-                        amount: parseInt(p.total_stake).toString(),
-                        denom: staking.params.bond_denom,
-                      },
-                      true,
-                      '0,0'
-                    )
+                  format.formatToken(
+                  {
+                  amount: parseInt(p.total_delegations).toString(),
+                  denom: staking.params.bond_denom,
+                  },
+                  true,
+                  '0,0'
+                  )
                   }}
                 </h4>
-                <span class="text-sm">Total stake</span>
-              </div>
-            </div>
-            <div class="flex mb-2">
-              <div
-                class="flex items-center justify-center rounded w-10 h-10"
-                style="border: 1px solid #666"
-              >
-                <Icon icon="mdi-percent" class="text-3xl" />
-              </div>
-              <div class="ml-3 flex flex-col justify-center">
-                <h4 v-if="p?.stake?.amount">
-                  {{
-                    format.formatToken(
-                      {
-                        amount: parseInt(p.stake.amount).toString(),
-                        denom: staking.params.bond_denom,
-                      },
-                      true,
-                      '0,0'
-                    )
-                  }}
-                </h4>
-                <span class="text-sm">Self stake</span>
+                <span class="text-sm">Total delegations</span>
               </div>
             </div>
 
-            <div class="flex mb-2">
-              <div
-                class="flex items-center justify-center rounded w-10 h-10"
-                style="border: 1px solid #666"
-              >
-                <Icon icon="mdi-account-tie" class="text-3xl" />
-              </div>
-
-              <div class="ml-3 flex flex-col">
-                <h4 v-if="p?.delegate_limit?.amount">
-                  {{
-                    format.formatToken(
-                      {
-                        amount: parseInt(p.delegate_limit.amount).toString(),
-                        denom: staking.params.bond_denom,
-                      },
-                      true,
-                      '0,0'
-                    )
-                  }}
-                </h4>
-                <span class="text-sm">Delegate limit</span>
-              </div>
-            </div>
           </div>
-        </div>
+        </div> -->
       </div>
       <div class="text-sm px-4 pt-3 border-t">{{ p.description?.details }}</div>
     </div>
     <div class="mt-3 grid grid-cols-1 md:!grid-cols-2 gap-4">
       <div>
-        <ProviderCommsionRate
-          :commission="Number(p.delegate_commission)"
-        ></ProviderCommsionRate>
+        <ProviderCommsionRate :commission="Number(p.delegate_commission)"></ProviderCommsionRate>
       </div>
       <div class="bg-base-100 rounded shadow relative overflow-auto">
         <div class="px-4 pt-4 mb-2 text-main font-lg font-semibold">
@@ -302,29 +238,18 @@ onMounted(() => {
           <div class="mb-3">
             <div class="text-sm flex">
               Provider Address
-              <Icon
-                icon="mdi:content-copy"
-                class="ml-2 cursor-pointer"
-                v-show="true"
-                @click="copyWebsite(p.address || '')"
-              />
+              <Icon icon="mdi:content-copy" class="ml-2 cursor-pointer" v-show="true"
+                @click="copyWebsite(p.provider || '')" />
             </div>
-            <RouterLink
-              class="text-xs text-primary"
-              :to="`/${chain}/account/${p.address}`"
-            >
-              {{ p.address }}
+            <RouterLink class="text-xs text-primary" :to="`/${chain}/account/${p.provider}`">
+              {{ p.provider }}
             </RouterLink>
           </div>
           <div class="mb-3">
             <div class="text-sm flex">
               Vault Address
-              <Icon
-                icon="mdi:content-copy"
-                class="ml-2 cursor-pointer"
-                v-show="true"
-                @click="copyWebsite(p.vault || '')"
-              />
+              <Icon icon="mdi:content-copy" class="ml-2 cursor-pointer" v-show="true"
+                @click="copyWebsite(p.vault || '')" />
             </div>
             <div class="text-xs">
               {{ p.vault }}
@@ -343,6 +268,7 @@ onMounted(() => {
             <tr>
               <th class="py-3">PROVIDER</th>
               <th class="py-3">CHAIN ID</th>
+              <th class="py-3">SELF STAKE</th>
               <th class="py-3">TOTAL STAKE</th>
               <th class="py-3">COMMISSION</th>
               <th class="py-3">STATUS</th>
@@ -352,41 +278,46 @@ onMounted(() => {
           <tbody class="text-sm">
             <tr v-for="(p, index) in providerOtherChains" :key="index">
               <td class="text-caption text-primary py-3">
-                <RouterLink :to="`/${chain}/providers/${p.chain}/${p.address}`"
-                  >{{ p?.moniker ?? p?.description?.moniker ?? p?.address }}
-                </RouterLink>
+                {{ p?.moniker ?? p?.description?.moniker ?? p?.address }}
               </td>
               <td class="text-caption text-primary py-3">
-                <RouterLink :to="`/${chain}/providers/${p.chain}`">{{
-                  p?.chain
-                }}</RouterLink>
+               {{ p?.chain }} 
               </td>
               <td class="py-3">
                 {{
-                  format.formatToken(
-                    {
-                      amount: parseInt(p.total_stake).toString(),
-                      denom: staking.params.bond_denom,
-                    },
-                    true,
-                    '0,0'
-                  )
+                format.formatToken(
+                {
+                amount: parseInt(p.stake.amount).toString(),
+                denom: staking.params.bond_denom,
+                },
+                true,
+                '0,0'
+                )
+                }}
+              </td>
+              <td class="py-3">
+                {{
+                format.formatToken(
+                {
+                amount: parseInt(p.total_stake).toString(),
+                denom: staking.params.bond_denom,
+                },
+                true,
+                '0,0'
+                )
                 }}
               </td>
               <td class="py-3">{{ p.delegate_commission }}%</td>
               <td class="py-3" :class="statusClass(p?.status)">
-                {{ p?.status?.toUpperCase() }}
+                {{ p?.status?.toUpperCase() }} {{ jailTime(p) }}
               </td>
               <td class="py-3">
                 <div v-if="true" class="flex">
                   <label for="lava_restake" class="btn btn-primary btn-xs mr-2"
-                         @click="dialog.open('lava_restake', { provider_address: p.address, chain_id: p.chain })"
-                    >restake</label
-                  >
+                 
+                    @click="dialog.open('lava_restake', { provider_address: p.provider})">restake</label>
                   <label for="lava_redelegate" class="btn btn-primary btn-xs mr-2"
-                          @click="dialog.open('lava_redelegate', { from_provider: p.address, from_chain_id: p.chain })"
-                    >redelagate</label
-                  >
+                    @click="dialog.open('lava_redelegate', { from_provider: p.provider })">redelegate</label>
                 </div>
               </td>
             </tr>
@@ -413,6 +344,12 @@ onMounted(() => {
 </template>
 
 <style>
+
+.tooltip-content {
+  max-width: 250px; /* Adjust the max width as needed */
+  word-wrap: break-word;
+  white-space: normal;
+}
 .staking-table.table :where(th, td) {
   padding: 8px 5px;
   background: transparent;
