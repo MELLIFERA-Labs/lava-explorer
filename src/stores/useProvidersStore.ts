@@ -89,6 +89,10 @@ export const useLavaProvidersStore = defineStore('providersStore', {
       const [ providerMetadata ] = metadata.MetaData;
       return providerMetadata; 
     },
+    async getProvidersMetadata() {
+      const metadata = await this.blockchain.rpc?.getProvidersMetadata();
+      return metadata.MetaData;
+    },
     async getProviderChains(address: string) {
       await this.ensureLatestHeight();
       const providersResponse = await this.blockchain.rpc?.getProviderChains(
