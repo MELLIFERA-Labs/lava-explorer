@@ -8,12 +8,13 @@ import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
 import localeData from 'dayjs/plugin/localeData';
 import { useStakingStore } from './useStakingStore';
-import { fromBase64, fromBech32, fromHex, toHex } from '@cosmjs/encoding';
+import { fromBase64, fromHex, toHex } from '@cosmjs/encoding';
 import { consensusPubkeyToHexAddress, get } from '@/libs';
 import { useBankStore } from './useBankStore';
 import type { Coin, DenomTrace } from '@/types';
 import { useDashboard } from './useDashboard';
 import type { Asset } from '@ping-pub/chain-registry-client/dist/types'
+import {nextTick} from "vue";
 
 dayjs.extend(localeData);
 dayjs.extend(duration);
@@ -72,9 +73,21 @@ export const useFormatter = defineStore('formatter', {
       return trace;
     },
     async fetchDenomMetadata(denom: string) {
+      console.log('fetching metadata for', denom)
       if(this.loading.includes(denom)) return
       this.loading.push(denom)
-      const asset = await get(`https://metadata.ping.pub/metadata/${denom}`) as Asset
+      let asset: Asset | undefined;
+      try {
+        asset = await get(`https://metadata.ping.pub/metadata/${denom}`) as Asset
+      } catch (e) {
+        const assetFromConfig = this.blockchain.current?.lava_iprpc_assets?.find((x) => x?.ibc_trace && x.ibc_trace.trim() === denom.trim())
+        if(assetFromConfig) {
+          asset = assetFromConfig
+        }
+      }
+      if(!asset) {
+        return
+      }
       this.ibcMetadata[denom] = asset
     },
     priceInfo(denom: string) {

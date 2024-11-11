@@ -106,7 +106,9 @@ const convertLavaToUSD = useDebounceFn(() => {
 }, 500);
 const parseRewardsData = (data: any, rewardType: string) => {
   const rewards = [] as any[];
-  data.info.forEach((item: any) => {
+  console.log('data===>', data);  
+  if(data.info.length) {
+    data.info.forEach((item: any) => {
     item.amount.forEach((amt: any) => {
       const denom = amt.denom;
       rewards.push({
@@ -118,6 +120,19 @@ const parseRewardsData = (data: any, rewardType: string) => {
       });
     });
   });
+  } else {
+    data.total.forEach((amt: any) => {
+      const denom = amt.denom;
+      rewards.push({
+        type: 'Total',
+        amount: amt.amount,
+        denom,
+        rewardType, // 'Validator' or 'Provider'
+        usdValue: 0, // We'll calculate this later
+      });
+    });
+  }
+  
   return rewards;
 };
 const rewards = ref([] as any[]);
@@ -191,16 +206,18 @@ const totalRewards = computed(() => {
 });
 
 async function calculateRewards() {
+  
   if (!amount.value || !validator.value) {
+    console.log('missed1')
     loadingRewards.value = false;
     return;
   }
   if(!provider.value) {
+    console.log('missed2')
     providerCU.value = '';
   }
-  if(provider.value === null) {
-    return;
-  }
+  
+  console.log('calculateRewards');
   loadingRewards.value = true;
   const unitAmount  = BigNumber(Number(amount.value)).times(BigNumber(10).pow(6)).toString()
   const convertAmount = unitAmount + 'ulava';

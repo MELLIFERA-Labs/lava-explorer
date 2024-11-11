@@ -148,6 +148,7 @@ export interface LocalConfig {
     exponent: string;
     logo: string;
     symbol: string;
+    ibc_trace?: string
   }[];
 }
 
@@ -198,6 +199,7 @@ export function fromLocal(lc: LocalConfig): ChainConfig {
           { denom: x.base, exponent: 0 },
           { denom: x.symbol.toLowerCase(), exponent: Number(x.exponent) },
         ],
+        ibc_trace: x.ibc_trace
       }
     })
   }

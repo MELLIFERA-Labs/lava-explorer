@@ -1,14 +1,22 @@
 {
   "chain_name": "lava",
   "api": [
+   {
+    "address": "https://lava.api.stakevillage.net",
+    "provider": "STAKEVILLAGE"
+   },
     {
-      "address": "https://lav1.lava.build:443",
+      "address": "https://lava-mainnet-rest.mellifera.network/",
       "provider": "MELLIFERA"
     }
   ],
   "rpc": [
     {
-      "address": "https://lav1.tendermintrpc.lava.build:443",
+      "address": "https://lava.tenderminrpc.stakevillage.net",
+      "provider": "STAKEVILLAGE"
+    },
+    {
+      "address": "https://lava-mainnet-rpc.mellifera.network/",
       "provider": "MELLIFERA"
     }
   ],
@@ -27,6 +35,19 @@
       "symbol": "ATOM",
       "exponent": "6",
       "coingecko_id": "cosmos"
+    },
+    {
+      "base": "aevmos",
+      "symbol": "EVMOS",
+      "exponent": "18",
+      "coingecko_id": "evmos"
+    },
+    {
+      "base": "ustars",
+      "symbol": "STARS",
+      "exponent": "6",
+      "coingecko_id": "stargaze",
+      "ibc_trace": "4F393C3FCA4190C0A6756CE7F6D897D5D1BE57D6CCB80D0BC87393566A7B6602"
     }
   ],
   "addr_prefix": "lava@",
