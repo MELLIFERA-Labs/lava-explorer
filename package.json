@@ -61,7 +61,8 @@
     "vue-prism-component": "^2.0.0",
     "vue-router": "^4.1.6",
     "vue3-apexcharts": "1.5.3",
-    "vue3-json-viewer": "^2.2.2"
+    "vue3-json-viewer": "^2.2.2",
+    "vue3-popper": "^1.5.0"
   },
   "devDependencies": {
     "@rollup/plugin-inject": "^5.0.5",

@@ -119,6 +119,11 @@ export async function getProviders(endpoint: string, chainId: string) {
     const url = `${endpoint}/lavanet/lava/pairing/providers/${chainId}?showFrozen=true`
     return get(url)
 }
+
+export async function getProvidersMetadata(endpoint:string) {
+   const url = `${endpoint}/lavanet/lava/epochstorage/provider_metadata/`
+   return get(url)
+}
 export async function getDelegatorProviders(endpoint: string,  address: string) {
     const url = `${endpoint}/lavanet/lava/dualstaking/delegator_providers/${address}`
     return get(url)

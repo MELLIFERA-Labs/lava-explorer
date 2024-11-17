@@ -10,9 +10,8 @@ import {useLavaProvidersStore} from "@/stores/useProvidersStore";
 
 const specs = ref([] as any[]);
 const format = useFormatter();
-let specChainId = ref('');
 let provider = ref(null);
-let providerCU = ref('');
+let providerCU = ref('0');
 let amount = ref('');
 let amountUsd = ref('');
 let validator = ref('');
@@ -28,23 +27,23 @@ const lavaSpecStore = useLavaSpecStore()
 const blockchain = useBlockchain();
 const lavaProvidersStore = useLavaProvidersStore();
 const mode = computed(() => isAPY.value ? 'apy' : 'apr');
-async function fetchProviders(chainID: string) {
-  await lavaProvidersStore.reloadProviders(chainID);
-  const providerRes = await lavaProvidersStore.getActiveProviders(chainID);
-  const preferred = providerRes.find((p) => p?.moniker.trim().toLowerCase().includes('mellifera') || p?.description?.moniker.trim().toLowerCase().includes('mellifera'));
+async function fetchProviders() {
+  const providerRes = await lavaProvidersStore.getProvidersMetadata();
+
+  const preferred = providerRes.find((p) => p?.description?.moniker.trim().toLowerCase().includes('mellifera'));
   if(preferred) {
-    providers.value = [preferred, ...providerRes.filter((p) => p?.address !== preferred.address)];
+    providers.value = [preferred, ...providerRes.filter((p) => p?.provider !== preferred.address)];
   } else {
     providers.value = providerRes;
   }
-  Promise.all(providerRes.map(async (p) => {
-    loadPerformance.value = true;
-    const cuData = await lavaProvidersStore.providerCus(chainID, p.address);
-    return cuData?.base_pay?.iprpc_cu ?? '0';
-  })).then((x) => {
-    totalProviderCUs.value = x.reduce((acc, val) => acc + Number(val), 0);
-    loadPerformance.value = false;
-  })
+  // Promise.all(providerRes.map(async (p) => {
+  //   loadPerformance.value = true;
+  //   const cuData = await lavaProvidersStore.providerCus(chainID, p.address);
+  //   return cuData?.base_pay?.iprpc_cu ?? '0';
+  // })).then((x) => {
+  //   totalProviderCUs.value = x.reduce((acc, val) => acc + Number(val), 0);
+  //   loadPerformance.value = false;
+  // })
 }
 function showResult() {
   return amount.value && validator.value;
@@ -74,10 +73,11 @@ function loadInactiveValidators() {
      inactiveValidators.value = x;
    })
 }
-onMounted(() => {
+onMounted(async () => {
   lavaSpecStore.getLavaSupportedChains({ enabled: false }).then((s) => {
     specs.value = s
   })
+  await fetchProviders();
 });
 
 const onAmountInput = useDebounceFn(() => {
@@ -106,7 +106,9 @@ const convertLavaToUSD = useDebounceFn(() => {
 }, 500);
 const parseRewardsData = (data: any, rewardType: string) => {
   const rewards = [] as any[];
-  data.info.forEach((item: any) => {
+  console.log('data===>', data);  
+  if(data.info.length) {
+    data.info.forEach((item: any) => {
     item.amount.forEach((amt: any) => {
       const denom = amt.denom;
       rewards.push({
@@ -118,6 +120,19 @@ const parseRewardsData = (data: any, rewardType: string) => {
       });
     });
   });
+  } else {
+    data.total.forEach((amt: any) => {
+      const denom = amt.denom;
+      rewards.push({
+        type: 'Total',
+        amount: amt.amount,
+        denom,
+        rewardType, // 'Validator' or 'Provider'
+        usdValue: 0, // We'll calculate this later
+      });
+    });
+  }
+  
   return rewards;
 };
 const rewards = ref([] as any[]);
@@ -191,25 +206,27 @@ const totalRewards = computed(() => {
 });
 
 async function calculateRewards() {
+  
   if (!amount.value || !validator.value) {
+    console.log('missed1')
     loadingRewards.value = false;
     return;
   }
   if(!provider.value) {
+    console.log('missed2')
     providerCU.value = '';
   }
-  if(provider.value === null && specChainId.value) {
-    return;
-  }
+  
+  console.log('calculateRewards');
   loadingRewards.value = true;
   const unitAmount  = BigNumber(Number(amount.value)).times(BigNumber(10).pow(6)).toString()
   const convertAmount = unitAmount + 'ulava';
   const validatorRewardsData = await blockchain.rpc.getEstimateValidatorRewards(validator.value, convertAmount);
   const validatorRewards = parseRewardsData(validatorRewardsData, 'Validator');
-  if(provider.value && specChainId.value) {
-    const cuData = await lavaProvidersStore.providerCus(specChainId.value, provider.value);
-    providerCU.value = cuData?.base_pay?.iprpc_cu ?? '0';
-    const providerRewardsData = await blockchain.rpc.getEstimateProviderRewards(provider.value, specChainId.value, convertAmount).catch(() => null);
+  if(provider.value) {
+    // const cuData = await lavaProvidersStore.providerCus(specChainId.value, provider.value);
+    // providerCU.value = cuData?.base_pay?.iprpc_cu ?? '0';
+    const providerRewardsData = await blockchain.rpc.getEstimateProviderRewards(provider.value, convertAmount).catch(() => null);
     if(providerRewardsData) {
       const providerRewards = parseRewardsData(providerRewardsData, 'Provider');
       rewards.value = [...validatorRewards, ...providerRewards];
@@ -261,12 +278,9 @@ const formatNumber = (num: number) => {
 function filterNaN(value: string) {
   return value === 'NaN' ? '' : value;
 }
-watch(specChainId, (current, prev) => {
-  if (current) {
-    fetchProviders(current);
-  } else {
-    providers.value = [];
-  }
+const validatedChains = computed(() => {
+  const selectedProvider = providers.value.find((p) => p.provider === provider.value);
+  return selectedProvider ? selectedProvider.chains : [];
 });
 </script>
 <template>
@@ -286,13 +300,8 @@ watch(specChainId, (current, prev) => {
           <label class="label">
             <span class="label-text">LAVA</span>
           </label>
-          <input
-              v-model="amount"
-              @input="convertLavaToUSD"
-              type="number"
-              placeholder="Enter amount in LAVA"
-              class="input border border-gray-300 dark:border-gray-600 w-full dark:text-white"
-          />
+          <input v-model="amount" @input="convertLavaToUSD" type="number" placeholder="Enter amount in LAVA"
+            class="input border border-gray-300 dark:border-gray-600 w-full dark:text-white" />
         </div>
 
         <!-- USD Input -->
@@ -300,13 +309,8 @@ watch(specChainId, (current, prev) => {
           <label class="label">
             <span class="label-text">USD</span>
           </label>
-          <input
-              v-model="amountUsd"
-              @input="convertUSDtoLava"
-              type="number"
-              placeholder="Enter amount in USD"
-              class="input border border-gray-300 dark:border-gray-600 w-full dark:text-white"
-          />
+          <input v-model="amountUsd" @input="convertUSDtoLava" type="number" placeholder="Enter amount in USD"
+            class="input border border-gray-300 dark:border-gray-600 w-full dark:text-white" />
         </div>
       </div>
 
@@ -325,41 +329,27 @@ watch(specChainId, (current, prev) => {
         </select>
       </div>
 
-      <!-- Chain Selection -->
       <div class="form-control mt-4">
-        <label class="label">
-          <span class="label-text">Select chain</span>
-        </label>
-        <select v-model="specChainId" class="select select-bordered dark:text-white" @change="calculateRewards()">
-          <option value="">--</option>
-          <option v-for="s in specs" :value="s.chainID">
-            {{ s.chainName }} - {{ s.chainID }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Provider Selection -->
-      <div v-if="!providers.length" class="form-control mt-4">
-        <label class="label">
-          <span class="label-text">Select provider</span>
-        </label>
-        <input
-            :value="specChainId ? 'No providers found for this chain' : 'Select a chain first'"
-            type="text"
-            disabled
-            class="input text-warning-600 dark:text-red border !border-gray-300 dark:!border-gray-600"
-        />
-      </div>
-      <div v-if="specChainId && providers.length" class="form-control mt-4">
         <label class="label">
           <span class="label-text">Select provider for restake</span>
         </label>
         <select v-model="provider" class="select select-bordered dark:text-white" @change="calculateRewards()">
           <option value="">--</option>
-          <option v-for="p in providers" :value="p.address">
-            {{ p.moniker || p.description?.moniker || p.address }} ({{ p.delegate_commission }}%)
+          <option v-for="p in providers" :value="p.provider">
+            {{ p.moniker || p.description?.moniker || p.provider }} {{ p.chains.length }} Services | {{
+            p.delegate_commission }}% Commision
           </option>
         </select>
+      </div>
+      <!-- Display Validated Chains -->
+      <div v-if="validatedChains.length > 0" class="mt-4">
+        <h3 class="font-bold mb-2 label-text">Chains provided by Selected Provider:</h3>
+        <div class="flex flex-wrap gap-2">
+          <span v-for="chain in validatedChains" :key="chain"
+            class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium border border-blue-200 shadow-sm">
+            {{ chain }}
+          </span>
+        </div>
       </div>
 
       <!-- Compounding Option -->
@@ -367,7 +357,9 @@ watch(specChainId, (current, prev) => {
         <input v-model="isAPY" type="checkbox" class="checkbox checkbox-primary mr-2" />
         <label class="cursor-pointer dark:text-gray-400">Compounded</label>
       </div>
+
     </div>
+
 
     <!-- Loading Spinner -->
     <div v-if="showResult() && loadingRewards" class="bg-base-100 rounded-lg p-6 mt-4 shadow-lg text-center">
@@ -386,11 +378,8 @@ watch(specChainId, (current, prev) => {
 
         <!-- Total Rewards Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-          <div
-              v-for="(item, denom) in totalRewards"
-              :key="denom"
-              class="bg-white dark:bg-gray-800 rounded-lg shadow p-4"
-          >
+          <div v-for="(item, denom) in totalRewards" :key="denom"
+            class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
             <div class="text-center">
               <div class="text-xl font-bold text-main">
                 {{ formatNumber(item[mode].percent) }} % APR
@@ -414,21 +403,19 @@ watch(specChainId, (current, prev) => {
             </div>
           </div>
 
-          <h3 v-if="providerCU" class="text-xl mt-4 font-semibold">Selected provider performance CU</h3>
+          <!-- <h3 v-if="providerCU" class="text-xl mt-4 font-semibold">Selected provider performance CU</h3>
           <div class="text-3xl font-bold text-main mt-2">
             {{ format.formatNumber(Number(providerCU), '0,0') }}
-          </div>
+          </div> -->
 
-          <div class="text-md" v-if="providerPerformancePercent">
+          <!-- <div class="text-md" v-if="providerPerformancePercent">
             {{ format.formatNumber(Number(providerPerformancePercent), '0.[00]') }} %
-          </div>
+          </div> -->
 
           <!-- Delegate & Restake Button -->
-          <label for="lava_delegate" class="mt-6 btn !bg-primary text-white"
-                 @click="dialog.open('lava_delegate', {
+          <label for="lava_delegate" class="mt-6 btn !bg-primary text-white" @click="dialog.open('lava_delegate', {
                    validator_address: validator,
                    provider_address: provider,
-                   chain_id: specChainId
                  })">delegate & restake</label>
         </div>
 
@@ -436,7 +423,9 @@ watch(specChainId, (current, prev) => {
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6">
           <p class="font-bold">Please Note:</p>
           <p>
-            The rewards displayed are <strong>estimated</strong> annual rewards. Final results may change based on factors such as provider and validator operational status, the number of relays produced by the provider, and other variables. <strong>This estimation do not take into account provider performance</strong>
+            The rewards displayed are <strong>estimated</strong> annual rewards. Final results may change based on
+            factors such as provider and validator operational status, the number of relays produced by the provider,
+            and other variables. <strong>This estimation do not take into account provider performance</strong>
           </p>
         </div>
       </div>
@@ -446,11 +435,8 @@ watch(specChainId, (current, prev) => {
           Without compounding
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <div
-              v-for="reward in rewards"
-              :key="reward.type + reward.currency + reward.amount"
-              class="bg-white dark:bg-[#1f2937] rounded-lg shadow p-4"
-          >
+          <div v-for="reward in rewards" :key="reward.type + reward.currency + reward.amount"
+            class="bg-white dark:bg-[#1f2937] rounded-lg shadow p-4">
             <div class="flex justify-between items-center">
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -481,5 +467,3 @@ order: 2
 }
 }
 </route>
-
-

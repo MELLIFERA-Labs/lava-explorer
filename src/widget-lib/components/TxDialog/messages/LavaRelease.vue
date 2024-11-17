@@ -1,10 +1,8 @@
 <script lang="ts" setup>
-import {computed, type ComputedRef, type PropType, ref, watch} from 'vue';
-import {getDelegatorProviders, getProviders, getSpecs, getStakingParam} from '../../../utils/http';
+import {computed, type PropType, ref } from 'vue';
+import {getDelegatorProviders, getProviders, getStakingParam} from '../../../utils/http';
 import type {Coin, CoinMetadata} from '../../../utils/type';
 import {TokenUnitConverter} from '../../../utils/TokenUnitConverter';
-import {useRouter} from 'vue-router';
-const router = useRouter();
 const props = defineProps({
   endpoint: { type: String, required: true },
   sender: { type: String, required: true },
@@ -13,9 +11,7 @@ const props = defineProps({
   params: String,
 });
 const params = computed(() => JSON.parse(props.params || '{}'));
-const provider = ref('');
 
-const specs = ref([]);
 const stakingDenom = ref('');
 const unbondingTime = ref('');
 const amount = ref('');
@@ -30,7 +26,7 @@ const msgs = computed(() => {
         creator: props.sender,
         fromProvider: params.value.from_provider,
         toProvider: 'empty_provider',
-        fromChainID: params.value.from_chain_id,
+        fromChainID: '*',
         toChainID: '*',
         amount: convert.displayToBase(stakingDenom.value, {
           amount: String(amount.value),
@@ -42,15 +38,7 @@ const msgs = computed(() => {
 });
 
 const sourceProvider = ref('');
-const sourceChain = computed(() => {
-  // @ts-ignore
-  const s = specs.value.find(s => s.chainID === params.value.from_chain_id)
-  if(s) {
-    // @ts-ignore
-    return ` ${ s.chainName } - ${ s.chainID }`
-  }
-  return params.value.chain_id
-})
+
 
 
 const available = computed(() => {
@@ -81,10 +69,6 @@ const units = computed(() => {
 const isValid = computed(() => {
   let ok = true;
   let error = '';
-  if(!params.value.from_chain_id) {
-    ok = false;
-    error = 'Chain ID is empty';
-  }
   if (!params.value.from_provider) {
     ok = false;
     error = 'Provider is empty';
@@ -113,9 +97,6 @@ function initial() {
     stakingDenom.value = x.params.bond_denom;
     unbondingTime.value = x.params.unbonding_time;
   });
-  getSpecs(props.endpoint).then((x) => {
-    specs.value = x.chainInfoList;
-  });
 }
 defineExpose({ msgs, isValid, initial });
 </script>
@@ -136,12 +117,6 @@ defineExpose({ msgs, isValid, initial });
         <span class="label-text">Source Provider</span>
       </label>
       <input :value="sourceProvider" type="text" class="input border border-gray-300 dark:border-gray-600 dark:text-white" readonly/>
-    </div>
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text">Source Chain</span>
-      </label>
-      <input :value="sourceChain" type="text" class="input border border-gray-300 dark:border-gray-600 dark:text-white" readonly/>
     </div>
     <div class="form-control">
       <label class="label">
