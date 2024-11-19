@@ -3,14 +3,6 @@
   "chain_name": "lava",
   "api": [
     {
-      "address": "https://m-api.lava.eu01.impulse.expert",
-      "provider": "Impulse" 
-    },
-    {
-      "address": "https://lava.api.stakevillage.net",
-      "provider": "Stake Village"
-    },
-    {
       "address": "https://lava.rest.lava.build:443",
       "provider": "MELLIFERA"
     }
