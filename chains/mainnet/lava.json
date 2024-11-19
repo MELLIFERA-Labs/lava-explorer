@@ -66,6 +66,12 @@
     },
     "EVMOS": {
         "logo": "https://ping.pub/logos/evmos.png"
+    },
+    "AXELAR": {
+        "logo": "https://ping.pub/logos/axelar.svg"
+    },
+    "AXELART": {
+        "logo": "https://ping.pub/logos/axelar.svg"
     }
   },
   "disabled_specs": [
