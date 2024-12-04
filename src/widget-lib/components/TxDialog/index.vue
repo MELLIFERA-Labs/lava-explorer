@@ -237,7 +237,7 @@ async function sendTx() {
         if(!advance.value) {
             await client.simulate(props.endpoint, tx, broadcast.value).then(gas => {
                 // update tx gas
-                tx.fee.gas = (gas * 1.25).toFixed()
+                tx.fee.gas = (gas * 1.8).toFixed()
             }).catch(() => {
                 // sending.value = false;
                 // error.value = "Failed to simulate tx gas: " + err;
