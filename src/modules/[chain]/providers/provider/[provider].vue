@@ -165,37 +165,6 @@ onMounted(() => {
             <p class="text-sm mt-4 mb-3 font-medium">
               {{ $t('staking.validator_status') }}
             </p>
-            <div class="card-list">
-            <div class="flex items-center mb-2">
-              <Icon icon="mdi-shield-alert-outline" class="text-xl mr-1" />
-              <span class="font-bold mr-2">Security: </span>
-                <!-- Security Status Indicator -->
-                <span :class="p.provider === p.vault ? 'text-error' : 'text-success'">
-                {{ p.provider === p.vault ? 'LOW' : 'HIGH' }}
-              </span>
-
-              <!-- Question Icon with Custom Tooltip Content -->
-              <Popper
-                arrow
-                placement="right"
-                hover
-              >
-                <template #default>
-                  <Icon icon="mdi-help-circle-outline" class="text-white cursor-pointer ml-1" />
-                </template>
-                <template #content>
-                  <div class="tooltip-content">
-                    {{ p.provider === p.vault 
-                        ? 'Vault and provider addresses are the same, which reduces security because it increases the risk of lose providers funds' 
-                        : 'Vault and provider addresses are different, ensuring higher security'
-                    }}
-                  </div>
-                </template>
-              </Popper>
-
-            
-            </div>
-          </div>
           </div>
         </div>
         <!-- <div class="flex-1">
