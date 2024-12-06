@@ -162,9 +162,9 @@ onMounted(() => {
                 </a>
               </div>
             </div>
-            <p class="text-sm mt-4 mb-3 font-medium">
+            <!-- <p class="text-sm mt-4 mb-3 font-medium">
               {{ $t('staking.validator_status') }}
-            </p>
+            </p> -->
           </div>
         </div>
         <!-- <div class="flex-1">
