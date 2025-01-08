@@ -31,7 +31,7 @@ async function fetchProviders() {
   const preferred = providerRes.find((p) => p?.description?.moniker.trim().toLowerCase().includes('mellifera'));
   let prv = providerRes;
   if(preferred) {
-    prv = [preferred, ...providerRes.filter((p) => p?.provider !== preferred.address)];
+    prv = [preferred, ...providerRes.filter((p) => p?.provider !== preferred.provider)];
   } else {
     prv = providerRes;
   }
@@ -113,7 +113,6 @@ const convertLavaToUSD = useDebounceFn(() => {
 }, 500);
 const parseRewardsData = (data: any, rewardType: string) => {
   const rewards = [] as any[];
-  console.log('data===>', data);  
   if(data.info.length) {
     data.info.forEach((item: any) => {
     item.amount.forEach((amt: any) => {
@@ -289,6 +288,12 @@ const validatedChains = computed(() => {
   const selectedProvider = providers.value.find((p) => p.provider === provider.value);
   return selectedProvider ? selectedProvider.chains : [];
 });
+watch(provider, () => {
+  calculateRewards();
+});
+watch(validator, () => {
+  calculateRewards();
+});
 </script>
 <template>
   <div class="container mx-auto p-6">
@@ -331,10 +336,8 @@ const validatedChains = computed(() => {
           :options="listValidator"
           label="label"
           :reduce="(v:any) => v.operator_address"
-          @change="calculateRewards"
         />
       </div>
-
       <div class="form-control mt-4">
         <label class="label">
           <span class="label-text">Select provider for restake</span>
@@ -344,7 +347,6 @@ const validatedChains = computed(() => {
           :options="providers"
           label="label"
           :reduce="(p:any) => p.provider"
-          @change="calculateRewards"
         />
       </div>
       <!-- Display Validated Chains -->
@@ -473,10 +475,3 @@ order: 2
 }
 }
 </route>
-<style scoped>
-::v-deep(.custom-select) {
-  height: 3rem;
-  line-height: 3rem;
-}
-
-</style>
