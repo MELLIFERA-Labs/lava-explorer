@@ -60,3 +60,88 @@ html[data-theme='dark'] {
   opacity: 0;
   transform: translateY(-calc(15%));
 }
+
+:root,
+:host {
+    --vs-colors--lightest: red;
+     /* #4b5563; */
+    --vs-colors--light: #4b5563;
+    --vs-colors--dark: #333;
+    --vs-colors--darkest: rgba(0, 0, 0, 0.15);
+
+    /* Search Input */
+    --vs-search-input-color: inherit;
+    --vs-search-input-bg: rgb(255, 255, 255);
+    --vs-search-input-placeholder-color: inherit;
+
+    /* Font */
+    --vs-font-size: 1rem;
+    --vs-line-height: 3rem;
+
+    /* Disabled State */
+    --vs-state-disabled-bg: rgb(255, 255, 255);
+    --vs-state-disabled-color: rgb(255, 255, 255);
+    --vs-state-disabled-controls-color: rgb(255, 255, 255);
+    --vs-state-disabled-cursor: not-allowed;
+
+    /* Borders */
+    --vs-border-color: rgb(69, 78, 99, 1);
+    --vs-border-width: 1px;
+    --vs-border-style: solid;
+    --vs-border-radius: 0.5rem;
+
+    /* Actions: house the component controls */
+    --vs-actions-padding: 4px 6px 0 3px;
+
+    /* Component Controls: Clear, Open Indicator */
+    --vs-controls-color: rgb(248, 248, 248);
+    --vs-controls-size: 1;
+    --vs-controls--deselect-text-shadow: 0 1px 0 #fff;
+
+    /* Selected */
+    --vs-selected-bg: #2a334b;
+    --vs-selected-color: #f0f0f0;
+    --vs-selected-border-color: var(--vs-border-color);
+    --vs-selected-border-style: var(--vs-border-style);
+    --vs-selected-border-width: var(--vs-border-width);
+
+    /* Dropdown */
+    --vs-dropdown-bg: #2a334b;
+    --vs-dropdown-color: inherit;
+    --vs-dropdown-z-index: 1000;
+    --vs-dropdown-min-width: 160px;
+    --vs-dropdown-max-height: 350px;
+    --vs-dropdown-box-shadow: 0px 3px 6px 0px var(--vs-colors--darkest);
+
+    /* Options */
+    --vs-dropdown-option-bg: #000;
+    --vs-dropdown-option-color: var(--vs-dropdown-color);
+    --vs-dropdown-option-padding: 3px 20px;
+
+    /* Active State */
+    --vs-dropdown-option--active-bg: #cd4546;
+    --vs-dropdown-option--active-color: #fff;
+
+    /* Deselect State */
+    --vs-dropdown-option--deselect-bg: #fb5858;
+    --vs-dropdown-option--deselect-color: #fff;
+
+    /* Transitions */
+    --vs-transition-timing-function: cubic-bezier(1, -0.115, 0.975, 0.855);
+    --vs-transition-duration: 150ms;
+}
+/* vue select configuration */
+.vs__dropdown-toggle {
+  height: 3rem;
+  line-height: 3rem; /* Match line-height to height */
+  padding: 0 1rem; /* Adjust padding for horizontal alignment */
+  text-align: center; /* Center text horizontally */
+}
+
+.vs__search {
+  height: 2.5rem;
+  padding: 0.25rem;
+}
+.vs__selected {
+  margin: 0;
+}

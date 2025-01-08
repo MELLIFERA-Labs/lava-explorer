@@ -21,7 +21,6 @@ let isAPY = ref(true);
 let loadingRewards = ref(false);
 let providers = ref([] as any[]);
 let totalProviderCUs = ref(0);
-let loadPerformance = ref(null as boolean | null);
 const dialog = useTxDialog();
 const lavaSpecStore = useLavaSpecStore()
 const blockchain = useBlockchain();
@@ -29,13 +28,17 @@ const lavaProvidersStore = useLavaProvidersStore();
 const mode = computed(() => isAPY.value ? 'apy' : 'apr');
 async function fetchProviders() {
   const providerRes = await lavaProvidersStore.getProvidersMetadata();
-
   const preferred = providerRes.find((p) => p?.description?.moniker.trim().toLowerCase().includes('mellifera'));
+  let prv = providerRes;
   if(preferred) {
-    providers.value = [preferred, ...providerRes.filter((p) => p?.provider !== preferred.address)];
+    prv = [preferred, ...providerRes.filter((p) => p?.provider !== preferred.address)];
   } else {
-    providers.value = providerRes;
+    prv = providerRes;
   }
+  providers.value = prv.map((p) => ({
+    ...p,
+    label: `${p.moniker || p.description?.moniker || p.provider} | ${p.chains.length} Services | ${p.delegate_commission}% Commision`,
+  }));
   // Promise.all(providerRes.map(async (p) => {
   //   loadPerformance.value = true;
   //   const cuData = await lavaProvidersStore.providerCus(chainID, p.address);
@@ -62,11 +65,15 @@ const listValidator: ComputedRef<
     }[]
 > = computed(() => {
   const preferred = staking.validators.find((v) => v.description.moniker.trim().toLowerCase().includes('mellifera'));
+  let validators = staking.validators;
   if (preferred) {
-    return [preferred, ...staking.validators.filter((v) => v.description.moniker.trim().toLowerCase() !== 'mellifera')];
+    validators = [preferred, ...staking.validators.filter((v) => v.description.moniker.trim().toLowerCase() !== 'mellifera')];
   }
-  return [...staking.validators, ...inactiveValidators.value];
-
+  return validators.map(v => (
+    {
+      ...v,
+      label: `${v.description.moniker} (${decimal2percent(v.commission.commission_rates.rate)}%)`,
+    }));
 });
 function loadInactiveValidators() {
    staking.fetchInacitveValdiators().then((x: any) => {
@@ -317,29 +324,28 @@ const validatedChains = computed(() => {
       <!-- Validator Selection -->
       <div class="form-control mt-4">
         <label class="label">
-          <span class="label-text">Validator</span>
-          <a class="label-text cursor-pointer" @click="loadInactiveValidators()">Show Inactive</a>
+            <span class="label-text">Select a Validator</span>
         </label>
-        <select v-model="validator" class="select select-bordered dark:text-white" @change="calculateRewards()">
-          <option value="">Select a validator</option>
-          <option v-for="v in listValidator" :value="v.operator_address">
-            {{ v.description.moniker }} ({{ decimal2percent(v.commission.commission_rates.rate) }}%)
-            <span v-if="v.status !== 'BOND_STATUS_BONDED'"> (Inactive)</span>
-          </option>
-        </select>
+        <v-select
+          v-model="validator"
+          :options="listValidator"
+          label="label"
+          :reduce="(v:any) => v.operator_address"
+          @change="calculateRewards"
+        />
       </div>
 
       <div class="form-control mt-4">
         <label class="label">
           <span class="label-text">Select provider for restake</span>
         </label>
-        <select v-model="provider" class="select select-bordered dark:text-white" @change="calculateRewards()">
-          <option value="">--</option>
-          <option v-for="p in providers" :value="p.provider">
-            {{ p.moniker || p.description?.moniker || p.provider }} {{ p.chains.length }} Services | {{
-            p.delegate_commission }}% Commision
-          </option>
-        </select>
+        <v-select
+          v-model="provider"
+          :options="providers"
+          label="label"
+          :reduce="(p:any) => p.provider"
+          @change="calculateRewards"
+        />
       </div>
       <!-- Display Validated Chains -->
       <div v-if="validatedChains.length > 0" class="mt-4">
@@ -467,3 +473,10 @@ order: 2
 }
 }
 </route>
+<style scoped>
+::v-deep(.custom-select) {
+  height: 3rem;
+  line-height: 3rem;
+}
+
+</style>
