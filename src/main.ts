@@ -1,6 +1,7 @@
 // import 'ping-widget';
 import App from '@/App.vue';
 import i18n from '@/plugins/i18n';
+import 'vue-select/dist/vue-select.css';
 import '@/style.css';
 import { createApp, ref } from 'vue';
 import { createPinia } from 'pinia';
@@ -9,6 +10,9 @@ import LazyLoad from 'lazy-load-vue3';
 import router from './router';
 import { useBaseStore } from './stores/useBaseStore';
 import { Buffer } from 'buffer';
+import vSelect from 'vue-select'
+
+
 window.Buffer = Buffer;
 // Create vue app
 const app = createApp(App);
@@ -17,6 +21,7 @@ app.use(i18n);
 app.use(createPinia());
 app.use(router);
 app.use(LazyLoad, { component: true });
+app.component('v-select', vSelect);
 // Mount vue app
 app.mount('#app');
 

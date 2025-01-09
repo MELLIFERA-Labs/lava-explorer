@@ -14,7 +14,6 @@ import { useBankStore } from './useBankStore';
 import type { Coin, DenomTrace } from '@/types';
 import { useDashboard } from './useDashboard';
 import type { Asset } from '@ping-pub/chain-registry-client/dist/types'
-import {nextTick} from "vue";
 
 dayjs.extend(localeData);
 dayjs.extend(duration);
