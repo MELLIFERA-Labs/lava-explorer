@@ -52,7 +52,11 @@ const list: ComputedRef<
         status: string;
     }[]
 > = computed(() => {
-    return [...activeValidators.value, ...inactiveValidators.value];
+    return [...activeValidators.value, ...inactiveValidators.value].map((v: any) => (
+    {
+      ...v,
+      label: `${v.description.moniker} (${decimal2percent(v.commission.commission_rates.rate)}%)`,
+    }));
 });
 
 const available = computed(() => {
@@ -141,15 +145,7 @@ defineExpose({ msgs, isValid, initial });
                     >Show Inactive</a
                 >
             </label>
-            <select v-model="validator" class="select select-bordered dark:text-white">
-                <option value="">Select a validator</option>
-                <option v-for="v in list" :value="v.operator_address">
-                    {{ v.description.moniker }} ({{
-                        decimal2percent(v.commission.commission_rates.rate)
-                    }}%)
-                    <span v-if="v.status !== 'BOND_STATUS_BONDED'">x</span>
-                </option>
-            </select>
+            <v-select v-model="validator" :options="list" label="label" :reduce="(v:any) => v.operator_address" />
         </div>
         <div class="form-control">
             <label class="label">

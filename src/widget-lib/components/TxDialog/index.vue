@@ -319,7 +319,7 @@ function fetchTx(tx: string) {
         <!-- Put this part before </body> tag -->
         <input v-model="open" type="checkbox" :id="type" class="modal-toggle" @change="initData()" />
         <label :for="type" class="modal cursor-pointer">
-            <label class="modal-box relative p-5" :class="{ '!w-11/12 !max-w-5xl': String(type).startsWith('wasm') }" for="">
+            <label class="modal-box relative p-5 overflow-y-visible" :class="{ '!w-11/12 !max-w-5xl': String(type).startsWith('wasm') }" for="">
                 <label :for="type" class="btn btn-sm btn-circle absolute right-4 top-4">✕</label>
                 <h3 class="text-lg font-bold capitalize dark:text-gray-300">
                     {{ showTitle() }}
