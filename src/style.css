@@ -70,9 +70,9 @@ html[data-theme='dark'] {
     --vs-colors--darkest: rgba(0, 0, 0, 0.15);
 
     /* Search Input */
-    --vs-search-input-color: inherit;
+    --vs-search-input-color: rgb(255, 255, 255);
     --vs-search-input-bg: rgb(255, 255, 255);
-    --vs-search-input-placeholder-color: inherit;
+    --vs-search-input-placeholder-color: rgb(255, 255, 255);
 
     /* Font */
     --vs-font-size: 1rem;
@@ -107,7 +107,7 @@ html[data-theme='dark'] {
 
     /* Dropdown */
     --vs-dropdown-bg: #2a334b;
-    --vs-dropdown-color: inherit;
+    --vs-dropdown-color: #f0f0f0;;
     --vs-dropdown-z-index: 1000;
     --vs-dropdown-min-width: 160px;
     --vs-dropdown-max-height: 350px;
@@ -115,7 +115,7 @@ html[data-theme='dark'] {
 
     /* Options */
     --vs-dropdown-option-bg: #000;
-    --vs-dropdown-option-color: var(--vs-dropdown-color);
+    --vs-dropdown-option-color: #f0f0f0;
     --vs-dropdown-option-padding: 3px 20px;
 
     /* Active State */
@@ -140,8 +140,10 @@ html[data-theme='dark'] {
 
 .vs__search {
   height: 2.5rem;
-  padding: 0.25rem;
+  padding: 0.45rem;
 }
 .vs__selected {
   margin: 0;
+  border: none;
+  padding: 0 .45em;
 }

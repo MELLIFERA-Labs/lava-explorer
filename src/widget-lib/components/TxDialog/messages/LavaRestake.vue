@@ -111,9 +111,13 @@ function initial() {
     unbondingTime.value = x.params.unbonding_time;
   });
   getProvidersMetadata(props.endpoint).then((x) => {
-    providers.value = x.MetaData;
+    const providersWithLabel= x?.MetaData?.map((p:any) => ({
+      ...p, 
+      label: `${p.moniker || p.description?.moniker || p.provider} | ${p.chains.length} Services | ${p.delegate_commission}% Commision`
+    })) || [];
+    providers.value = providersWithLabel;
     if(!params.value.provider_address) {
-      provider.value = x.MetaData.find(matchMoniker)?.provider;
+      provider.value = providersWithLabel.find(matchMoniker)?.provider;
     }
   });
   
@@ -160,12 +164,7 @@ defineExpose({ msgs, isValid, initial, noSend: isLavaWarning });
       <label class="label">
         <span class="label-text">Select provider</span>
       </label>
-      <select v-model="provider" class="select select-bordered dark:text-white">
-        <option value="">--</option>
-        <option v-for="p in providers" :value="p.provider">
-         {{ p.moniker || p.description?.moniker || p.address }}   {{ p.chains.length }} Services | {{ p.delegate_commission }}% Commision
-        </option>
-      </select>
+      <v-select v-model="provider" :options="providers" label="label" :reduce="(p:any) => p.provider" />
     </div>
 
     <div class="form-control">

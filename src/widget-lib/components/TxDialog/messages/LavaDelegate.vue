@@ -58,7 +58,11 @@ const listValidator: ComputedRef<
       status: string;
     }[]
 > = computed(() => {
-  return [...activeValidators.value, ...inactiveValidators.value];
+  return [...activeValidators.value, ...inactiveValidators.value].map((v: any) => (
+    {
+      ...v,
+      label: `${v.description.moniker} (${decimal2percent(v.commission.commission_rates.rate)}%)`,
+    }));
 });
 function loadInactiveValidators() {
   getInactiveValidators(props.endpoint).then((x) => {
@@ -129,9 +133,13 @@ function initial() {
     }
   });
   getProvidersMetadata(props.endpoint).then((x) => {
-    providers.value = x.MetaData;
+    const providersWithLabel= x?.MetaData?.map((p:any) => ({
+      ...p, 
+      label: `${p.moniker || p.description?.moniker || p.provider} | ${p.chains.length} Services | ${p.delegate_commission}% Commision`
+    })) || [];
+    providers.value = providersWithLabel;
     if(!params.value.provider_address) {
-      provider.value = x.MetaData.find(matchMoniker)?.provider;
+      provider.value = providersWithLabel.find(matchMoniker)?.provider;
     }
   });
   getStakingParam(props.endpoint).then((x) => {
@@ -152,70 +160,44 @@ defineExpose({ msgs, isValid, initial });
       <label class="label">
         <span class="label-text">Sender</span>
       </label>
-      <input
-          :value="sender"
-          type="text"
-          class="text-gray-600 dark:text-white input border !border-gray-300 dark:!border-gray-600"
-      />
+      <input :value="sender" type="text"
+        class="text-gray-600 dark:text-white input border !border-gray-300 dark:!border-gray-600" />
     </div>
     <div class="form-control">
       <label class="label">
         <span class="label-text">Validator</span>
-        <a class="label-text" @click="loadInactiveValidators()"
-        >Show Inactive</a
-        >
+        <a class="label-text" @click="loadInactiveValidators()">Show Inactive</a>
       </label>
-      <select v-model="validator" class="select select-bordered dark:text-white">
-        <option value="">Select a validator</option>
-        <option v-for="v in listValidator" :value="v.operator_address">
-          {{ v.description.moniker }} ({{
-            decimal2percent(v.commission.commission_rates.rate)
-          }}%)
-          <span v-if="v.status !== 'BOND_STATUS_BONDED'">x</span>
-        </option>
-      </select>
+      <v-select v-model="validator" :options="listValidator" label="label" :reduce="(v:any) => v.operator_address" />
     </div>
     <div class="form-control">
       <label class="label">
         <span class="label-text">Select provider</span>
       </label>
-      
-      <select v-model="provider" class="select select-bordered dark:text-white">
-        <option value="">--</option>
-        <option v-for="p in providers" :value="p.provider">
-         {{ p.moniker || p.description?.moniker || p.address }}   {{ p.chains.length }} Services | {{ p.delegate_commission }}% Commision
-         </option>
-      </select>
+      <v-select v-model="provider" :options="providers" label="label" :reduce="(p:any) => p.provider" />
     </div>
 
     <div class="form-control">
       <label class="label">
         <span class="label-text">Amount</span>
         <span>
-                    {{ available?.display.amount }} {{ available?.display.denom }}
-                </span>
+          {{ available?.display.amount }} {{ available?.display.denom }}
+        </span>
       </label>
       <label class="join">
-        <input
-            v-model="amount"
-            type="number"
-            :placeholder="`Available: ${available?.display.amount}`"
-            class="input border border-gray-300 dark:border-gray-600 w-full join-item dark:text-white"
-        />
+        <input v-model="amount" type="number" :placeholder="`Available: ${available?.display.amount}`"
+          class="input border border-gray-300 dark:border-gray-600 w-full join-item dark:text-white" />
         <select v-model="amountDenom" class="select select-bordered join-item dark:text-white">
           <option v-for="u in units">{{ u.denom }}</option>
         </select>
       </label>
     </div>
-     <!-- Display Validated Chains -->
-     <div v-if="validatedChains.length > 0" class="mt-4">
+    <!-- Display Validated Chains -->
+    <div v-if="validatedChains.length > 0" class="mt-4">
       <h3 class="font-bold mb-2 label-text">Chains provided by Selected Provider:</h3>
       <div class="flex flex-wrap gap-2">
-        <span
-          v-for="chain in validatedChains"
-          :key="chain"
-          class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium border border-blue-200 shadow-sm"
-        >
+        <span v-for="chain in validatedChains" :key="chain"
+          class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium border border-blue-200 shadow-sm">
           {{ chain }}
         </span>
       </div>

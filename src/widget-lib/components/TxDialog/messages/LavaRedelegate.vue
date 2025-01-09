@@ -100,7 +100,10 @@ function initial() {
     sourceProvider.value = p ? `${ p.moniker || p.description?.moniker || p.address} (${p.delegate_commission}%)` : params.value.from_provider
   });
   getProvidersMetadata(props.endpoint).then((x) => {
-    providers.value = x.MetaData;
+    providers.value = x?.MetaData?.map((p:any) => ({
+      ...p, 
+      label: `${p.moniker || p.description?.moniker || p.provider} | ${p.chains.length} Services | ${p.delegate_commission}% Commision`
+    })) || [];
     
   });
   
@@ -140,12 +143,7 @@ defineExpose({ msgs, isValid, initial });
       <label class="label">
         <span class="label-text">Select provider</span>
       </label>
-      <select v-model="provider" class="select select-bordered dark:text-white">
-        <option value="">--</option>
-        <option v-for="p in providers" :value="p.provider">
-         {{ p.moniker || p.description?.moniker || p.address }}   {{ p.chains.length }} Services | {{ p.delegate_commission }}% Commision
-        </option>
-      </select>
+      <v-select v-model="provider" :options="providers" label="label" :reduce="(p:any) => p.provider" />
     </div>
     <div class="form-control">
       <label class="label">
