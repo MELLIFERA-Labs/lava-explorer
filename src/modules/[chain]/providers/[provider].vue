@@ -7,7 +7,6 @@ import ProviderCommsionRate from '@/components/ProviderCommsionRate.vue';
 import dayjs from 'dayjs';
 const props = defineProps(['provider', 'chain', 'chain_id']);
 const provider: string = props.provider;
-const lavaChainId: string = props.chain_id;
 const identity = ref('');
 const p = ref({} as any);
 const cache = JSON.parse(localStorage.getItem('providers-avatars') || '{}');
@@ -18,7 +17,6 @@ const format = useFormatter();
 const staking = useStakingStore();
 const lavaProvidersStore = useLavaProvidersStore();
 const dialog = useTxDialog();
-import Popper from 'vue3-popper';
 const copyWebsite = async (url: string) => {
   if (!url) {
     return;
