@@ -4,6 +4,7 @@ import { useLavaProvidersStore } from '@/stores/useProvidersStore';
 import { Icon } from '@iconify/vue';
 import { computed } from '@vue/reactivity';
 import Popper from 'vue3-popper';
+const props = defineProps(['provider', 'chain', 'chain_id']);
 import {useFormatter, useStakingStore, useTxDialog} from '@/stores';
 import {useLavaSpecStore} from "@/stores/useLavaSpecStore";
 const lavaProvidersStore = useLavaProvidersStore();
@@ -112,90 +113,15 @@ loadAvatars();
 <template>
   <div>
     <div>
-      <div
-        class="bg-base-100 rounded-lg grid sm:grid-cols-1 md:grid-cols-4 p-4"
-      >
-        <div class="flex">
-          <span>
-            <div
-              class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2"
-            >
-              <Icon class="text-success" icon="mdi:trending-up" size="32" />
-              <div
-                class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-success"
-              ></div>
-            </div>
-          </span>
-          <span>
-            <div class="font-bold">Number of providers</div>
-            <div class="text-xs">{{providers.length}}</div>
-          </span>
+      <div class="flex bg-base-100 rounded-lg mb-2 items-center justify-between py-1 p-4">
+        <div class="tabs  tabs-boxed bg-transparent">
+          <label
+                  for="lava_delegate"
+                  class="btn btn-xs btn-primary rounded-sm heart-label"
+                  @click="dialog.open('lava_delegate', {} )"
+                  ><span class="heart-icon">❤️</span> Support us by restake</label>
         </div>
-        <div class="flex">
-          <span>
-            <div
-              class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2"
-            >
-              <Icon
-                class="text-primary"
-                icon="mdi:lock-open-outline"
-                size="32"
-              />
-              <div
-                class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-primary"
-              ></div>
-            </div>
-          </span>
-          <span>
-            <div class="font-bold">Jailed providers</div>
-            <div class="text-xs">{{1}}</div>
-          </span>
-        </div>
-        <div class="flex">
-          <span>
-            <div
-              class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2"
-            >
-              <Icon
-                class="text-error"
-                icon="mdi:alert-octagon-outline"
-                size="32"
-              />
-              <div
-                class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-error"
-              ></div>
-            </div>
-          </span>
-          <span>
-            <div class="font-bold">Frozen providers</div>
-            <div class="text-xs">{{1}}</div>
-          </span>
-        </div>
-        <div class="flex">
-          <span>
-            <div
-              class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2"
-            >
-              <Icon class="text-error" icon="mdi:money" size="32" />
-              <div
-                class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-error"
-              ></div>
-            </div>
-          </span>
-          <span>
-            <div class="font-bold">Min stake for provider</div>
-            <div class="text-xs"> {{
-                format.formatToken(
-                    {
-                      amount: parseInt(spec?.Spec?.min_stake_provider?.amount).toString(),
-                      denom: staking.params.bond_denom,
-                    },
-                    true,
-                    '0,0'
-                )
-              }}</div>
-          </span>
-        </div>
+        <div class="text-lg font-semibold">{{ list.length }} providers </div>
       </div>
     </div>
     <div class="bg-base-100 px-4 pt-3 pb-4 rounded shadow">
@@ -322,7 +248,12 @@ loadAvatars();
                     </template>
                     <template #content>
                       <div class="tooltip-content">
-                        {{ provider.chains.join(', ') }}
+                        <template v-for="chainSpec in provider.chains">
+                          <RouterLink class="text-xs text-primary hover:underline" :to="`/${chain}/chains/${chainSpec}/`">
+                            {{ chainSpec }}
+                          </RouterLink>
+                          <span v-if="provider.chains.indexOf(chainSpec) !== provider.chains.length - 1">, </span>
+                        </template>
                       </div>
                     </template>
                   </Popper>
@@ -342,9 +273,9 @@ loadAvatars();
                 </div>
                 <label
                   v-else
-                  for="lava_restake"
+                  for="lava_delegate"
                   class="btn btn-xs btn-primary rounded-sm capitalize"
-                  @click="dialog.open('lava_restake', { provider_address: provider.address, chain_id: provider.chain })"
+                  @click="dialog.open('lava_delegate', { provider_address: provider.provider, validator_address: null})"
                   >restake</label>
               </td>
             </tr>
@@ -360,6 +291,23 @@ loadAvatars();
   padding: 8px 5px;
   background: transparent;
 }
+.heart-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+ }
+
+  .heart-label:hover {
+    transform: scale(1.1);
+  }
+  .heart-icon {
+    font-size: 1.2em;
+    color: red;
+  }
 </style>
 
 <route>

@@ -21,7 +21,7 @@ const params = computed(() => JSON.parse(props.params || '{}'));
 
 const validator = ref('');
 
-const activeValidators = ref([]);
+const activeValidators = ref<any[]>([]);
 const inactiveValidators = ref([]);
 
 const provider = ref('');
@@ -125,19 +125,23 @@ function initial() {
   provider.value = params.value.provider_address;
   validator.value = params.value.validator_address;
   getActiveValidators(props.endpoint).then((x) => {
-    activeValidators.value = x.validators;
-    if (!params.value.validator_address) {
+    const preferredValidator = x?.validators.find(matchMoniker);
+    activeValidators.value = [preferredValidator, ...x?.validators.filter((v: { operator_address?: string }) => v?.operator_address !== preferredValidator?.operator_address) ?? []];
+    if (!params.value.validator_address && params.value.validator_address !== null) {
       validator.value = x.validators.find(
           (v: any) => v.description.moniker.trim().toLowerCase().includes('mellifera')
       )?.operator_address;
     }
   });
   getProvidersMetadata(props.endpoint).then((x) => {
-    const providersWithLabel= x?.MetaData?.map((p:any) => ({
+    const preferredProvider = x?.MetaData?.find(matchMoniker);
+    const allProviders = [preferredProvider, ...x?.MetaData.filter((p: {provider?: string }) => p?.provider !== preferredProvider?.provider) ?? []];
+    const providersWithLabel= allProviders.map((p:any) => ({
       ...p, 
       label: `${p.moniker || p.description?.moniker || p.provider} | ${p.chains.length} Services | ${p.delegate_commission}% Commision`
     })) || [];
-    providers.value = providersWithLabel;
+    providers.value = providersWithLabel; 
+    
     if(!params.value.provider_address) {
       provider.value = providersWithLabel.find(matchMoniker)?.provider;
     }
