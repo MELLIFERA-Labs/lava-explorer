@@ -136,7 +136,7 @@ watch(activeProviders, (newValue: any) => {
     <div
         class="bg-base-100 rounded-lg grid sm:grid-cols-1 md:grid-cols-4 p-4 mb-1"
     >
-      <span>{{spec?.Spec?.name}} providers (spec?.Spec?.index)</span>
+      <span>{{spec?.Spec?.name}} providers ({{spec?.Spec?.index}})</span>
     </div>
     <div>
       <div
