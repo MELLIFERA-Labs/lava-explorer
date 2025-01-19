@@ -91,7 +91,13 @@ export const useLavaProvidersStore = defineStore('providersStore', {
     },
     async getProvidersMetadata() {
       const metadata = await this.blockchain.rpc?.getProvidersMetadata();
-      return metadata.MetaData;
+      const sortedByTotalStake = metadata?.MetaData.sort((a: any, b: any) => {
+        return bignumber(b.total_delegations.amount).minus(a.total_delegations.amount).toNumber();
+      }).map((provider: any, index: number) => {
+        provider.rank = index + 1;
+        return provider;
+      });
+      return sortedByTotalStake;
     },
     async getProviderChains(address: string) {
       await this.ensureLatestHeight();

@@ -4,10 +4,10 @@ import { onMounted, computed, ref } from 'vue';
 import { useLavaProvidersStore } from '@/stores/useProvidersStore';
 import {useFormatter, useStakingStore, useTxDialog} from '@/stores';
 import ProviderCommsionRate from '@/components/ProviderCommsionRate.vue';
+import BigNumber from "bignumber.js";
 import dayjs from 'dayjs';
 const props = defineProps(['provider', 'chain', 'chain_id']);
 const provider: string = props.provider;
-const lavaChainId: string = props.chain_id;
 const identity = ref('');
 const p = ref({} as any);
 const cache = JSON.parse(localStorage.getItem('providers-avatars') || '{}');
@@ -18,7 +18,6 @@ const format = useFormatter();
 const staking = useStakingStore();
 const lavaProvidersStore = useLavaProvidersStore();
 const dialog = useTxDialog();
-import Popper from 'vue3-popper';
 const copyWebsite = async (url: string) => {
   if (!url) {
     return;
@@ -109,6 +108,29 @@ onMounted(() => {
     });
   }
 });
+const allSelfStake = computed(() => {
+  return providerOtherChains.value.reduce((sum, provider) => {
+    const amount = new BigNumber(provider.stake.amount || 0);
+    return sum.plus(amount);
+  }, new BigNumber(0));
+});
+
+const allTotalStake = computed(() => {
+  return providerOtherChains.value.reduce((sum, provider) => {
+    const totalStake = new BigNumber(provider.total_stake || 0);
+    return sum.plus(totalStake);
+  }, new BigNumber(0));
+});
+const selfStakePercentage = (stake: string) => {
+  if (!allSelfStake.value.isZero()) {
+    const percentage = new BigNumber(stake || 0)
+      .dividedBy(allSelfStake.value)
+      .multipliedBy(100);
+    return percentage.toFixed(2); // Show two decimal places
+  }
+  return '0.00'; // Handle cases where allSelfStake is zero
+};
+
 </script>
 <template>
   <div>
@@ -133,8 +155,8 @@ onMounted(() => {
               <div class="text-sm mb-4">
                 {{ p.description?.identity || '-' }}
               </div>
-              <label for="lava_restake" class="btn btn-primary btn-sm w-full"
-                @click="dialog.open('lava_restake', { provider_address: p.provider })">restake</label>
+              <label for="lava_delegate" class="btn btn-primary btn-sm w-full"
+                @click="dialog.open('lava_delegate', { provider_address: p.provider, validator_address: null} )">restake</label>
             </div>
           </div>
           <div class="m-4 text-sm">
@@ -167,7 +189,7 @@ onMounted(() => {
             </p> -->
           </div>
         </div>
-        <!-- <div class="flex-1">
+        <div class="flex-1">
           <div class="flex flex-col mt-10">
             <div class="flex mb-2">
               <div class="flex items-center justify-center rounded w-10 h-10" style="border: 1px solid #666">
@@ -175,23 +197,24 @@ onMounted(() => {
               </div>
               <div class="ml-3 flex flex-col justify-center">
                 <h4 v-if="p.total_delegations">
-                  {{
-                  format.formatToken(
-                  {
-                  amount: parseInt(p.total_delegations).toString(),
-                  denom: staking.params.bond_denom,
-                  },
-                  true,
-                  '0,0'
-                  )
-                  }}
+                  {{ format.formatToken({ amount: allTotalStake.toString(), denom: staking.params.bond_denom }, true, '0,0') }}
                 </h4>
-                <span class="text-sm">Total delegations</span>
+                <span class="text-sm">Total stake</span>
               </div>
             </div>
-
+            <div class="flex mb-2">
+              <div class="flex items-center justify-center rounded w-10 h-10" style="border: 1px solid #666">
+                <Icon icon="mdi-account-cash-outline" class="text-3xl" />
+              </div>
+              <div class="ml-3 flex flex-col justify-center">
+                <h4 v-if="p.total_delegations">
+                  {{ format.formatToken({ amount: allSelfStake.toString(), denom: staking.params.bond_denom }, true, '0,0') }}
+                </h4>
+                <span class="text-sm">Total self stake</span>
+              </div>
+            </div>
           </div>
-        </div> -->
+        </div>
       </div>
       <div class="text-sm px-4 pt-3 border-t">{{ p.description?.details }}</div>
     </div>
@@ -238,6 +261,7 @@ onMounted(() => {
               <th class="py-3">PROVIDER</th>
               <th class="py-3">CHAIN ID</th>
               <th class="py-3">SELF STAKE</th>
+              <th class="py-3">SELF STAKE %</th>
               <th class="py-3">TOTAL STAKE</th>
               <th class="py-3">COMMISSION</th>
               <th class="py-3">STATUS</th>
@@ -250,29 +274,34 @@ onMounted(() => {
                 {{ p?.moniker ?? p?.description?.moniker ?? p?.address }}
               </td>
               <td class="text-caption text-primary py-3">
-               {{ p?.chain }} 
+                <RouterLink class="text-primary hover:underline" :to="`/${chain}/chains/${p?.chain}/`">
+                  {{ p?.chain }}
+                </RouterLink>
               </td>
               <td class="py-3">
                 {{
                 format.formatToken(
-                {
-                amount: parseInt(p.stake.amount).toString(),
-                denom: staking.params.bond_denom,
-                },
-                true,
-                '0,0'
+                  {
+                    amount: parseInt(p.stake.amount).toString(),
+                    denom: staking.params.bond_denom,
+                  },
+                  true,
+                  '0,0'
                 )
                 }}
               </td>
               <td class="py-3">
+                {{ selfStakePercentage(p.stake.amount) }}%
+              </td>
+              <td class="py-3">
                 {{
                 format.formatToken(
-                {
-                amount: parseInt(p.total_stake).toString(),
-                denom: staking.params.bond_denom,
-                },
-                true,
-                '0,0'
+                  {
+                    amount: parseInt(p.total_stake).toString(),
+                    denom: staking.params.bond_denom,
+                  },
+                  true,
+                  '0,0'
                 )
                 }}
               </td>
@@ -281,12 +310,12 @@ onMounted(() => {
                 {{ p?.status?.toUpperCase() }} {{ jailTime(p) }}
               </td>
               <td class="py-3">
+                {{ p.provider }}
                 <div v-if="true" class="flex">
-                  <label for="lava_restake" class="btn btn-primary btn-xs mr-2"
-                 
-                    @click="dialog.open('lava_restake', { provider_address: p.provider})">restake</label>
+                  <label for="lava_delegate" class="btn btn-primary btn-xs mr-2"
+                    @click="dialog.open('lava_delegate', { provider_address: p.address } )">restake</label>
                   <label for="lava_redelegate" class="btn btn-primary btn-xs mr-2"
-                    @click="dialog.open('lava_redelegate', { from_provider: p.provider })">redelegate</label>
+                    @click="dialog.open('lava_redelegate', { from_provider: p.address })">redelegate</label>
                 </div>
               </td>
             </tr>
