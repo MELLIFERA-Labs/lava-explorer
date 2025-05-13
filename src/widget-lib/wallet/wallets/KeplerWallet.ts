@@ -111,12 +111,43 @@ export class KeplerWallet implements AbstractWallet {
             }).finish()
         })
         const signMode = SignModeV.SIGN_MODE_LEGACY_AMINO_JSON;
-        const msgs = tx.messages.map((msg) => this.aminoTypes.toAmino(msg));
+        const msgs = tx.messages.map((msg) => {
+            // Deep-convert MsgSubmitProposal content
+            if (msg.typeUrl === "/cosmos.gov.v1beta1.MsgSubmitProposal") {
+              const submit = msg.value as any;
+          
+            //   const decodedContent = this.decodeProposalContent(submit.content);
+            //   const aminoContent = this.aminoTypes.toAmino({
+            //     typeUrl: submit.content.typeUrl,
+            //     value: msg.value.content.value,
+            //   });
+          
+              return {
+                type: "cosmos-sdk/MsgSubmitProposal",
+                value: {
+                  content: {
+                    type: 'cosmos-sdk/TextProposal',
+                    value: {
+                        title: submit.content.value.title,
+                        description: submit.content.value.description,
+                    },
+                  },
+                  proposer: submit.proposer,
+                  initial_deposit: submit.initial_deposit,
+                },
+              };
+            }
+          
+            // Regular shallow conversion for other messages
+            return this.aminoTypes.toAmino(msg);
+          });
         const signDoc = makeSignDocAmino(msgs, tx.fee, tx.chainId, tx.memo, tx.signerData.accountNumber, tx.signerData.sequence);
         
         // @ts-ignore
         const offlineSigner = window.getOfflineSigner(this.chainId)
         const { signature, signed } = await offlineSigner.signAmino(tx.signerAddress, signDoc);
+        console.log('---->', signed.msgs)
+        
 
         const signedTxBody = {
             messages: signed.msgs.map((msg: any) => this.aminoTypes.fromAmino(msg)),

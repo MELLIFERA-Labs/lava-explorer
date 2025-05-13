@@ -274,9 +274,6 @@ const amount = computed({
         <CardStatisticsVertical v-bind="item" />
       </div>
     </div>
-
-    <AdBanner id="chain-home-banner-ad" unit="banner" width="970px" height="90px" />
-    <EpochCountdown epoch-interval-block="60" label="Current epoch" />
     <div v-if="blockchain.supportModule('governance')" class="bg-base-100 rounded mt-4 shadow">
       <div class="px-4 pt-4 pb-2 text-lg font-semibold text-main">
         {{ $t('index.active_proposals') }}
@@ -393,61 +390,19 @@ const amount = computed({
           </tbody>
         </table>
       </div>
-      <div v-if="walletStore.providerDelegations.length > 0" class="px-4 pb-4 overflow-auto">
-        <h2 class="text-lg font-semibold text-main">Providers delegations</h2>
-        <table class="table table-compact w-full table-zebra">
-          <thead>
-          <tr>
-            <th>Provider</th>
-            <th>{{ $t('account.delegation') }}</th>
-            <th>{{ $t('account.rewards') }}</th>
-            <th>{{ $t('account.action') }}</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(item, index) in walletStore.providerDelegations" :key="index">
-            <td>
-              <RouterLink class="link link-primary no-underline" :to="`/${chain}/providers/provider/${item.provider}`">
-                {{
-                 walletStore.getProviderName(item?.provider)
-                }}
-              </RouterLink>
-            </td>
-            <td>{{ format.formatToken(item.amount, true, '0,0.[00]') }}</td>
-            <td>
-              {{
-                format.formatTokens(
-                    walletStore.providerRewards?.rewards?.find(
-                        (x: any) =>
-                            x.provider === item.provider && x.chain_id === item.chainID
-                    )?.amount
-                )
-              }}
-            </td>
-            <td>
-              <div>
-                <label for="lava_redelegate" class="btn !btn-xs !btn-primary btn-ghost rounded-sm mr-2"
-                       @click="dialog.open('lava_redelegate', {from_provider: item.provider, from_chain_id: item.chainID}, updateState)">
-                  redelegate
-                </label>
-                <label for="lava_withdraw" class="btn !btn-xs !btn-primary btn-ghost rounded-sm"
-                       @click="dialog.open('lava_withdraw', {  }, updateState)">
-                  {{ $t('index.btn_withdraw_reward') }}
-                </label>
-              </div>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
+      
 
       <div class="grid md:!grid-cols-3 gap-3 auto-cols-auto px-4 pb-6 mt-4">
 <!--        <label for="PingTokenConvert" class="btn btn-warning text-white">{{ $t('index.btn_swap') }}</label>-->
         <label for="send" class="btn !bg-yes !border-yes text-white" @click="dialog.open('send', {}, updateState)">{{ $t('account.btn_send') }}</label>
         <label for="delegate" class="btn !bg-info !border-info text-white"
           @click="dialog.open('delegate', {}, updateState)">{{ $t('account.btn_delegate') }}</label>
-        <label for="lava_delegate" class="btn !bg-primary text-white"
-               @click="dialog.open('lava_delegate', {}, updateState)">delegate & restake</label>
+        <label for="create_proposal" class="btn !bg-primary text-white"
+                      @click="dialog.open('create_proposal', {}, updateState)">
+               Create Proposal 
+              </label>
+        <!-- <label for="lava_delegate" class="btn !bg-primary text-white"
+               @click="dialog.open('lava_delegate', {}, updateState)">delegate & restake</label> -->
         <RouterLink to="/wallet/receive" class="btn !bg-info !border-info text-white hidden">{{ $t('index.receive') }}</RouterLink>
       </div>
       <Teleport to="body">

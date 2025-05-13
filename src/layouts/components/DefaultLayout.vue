@@ -92,12 +92,6 @@ dayjs()
           <Icon icon="mdi-close" class="text-2xl" />
         </div>
       </div>
-      <div class="flex justify-between mt-1 pl-4 py-4">
-        <h1><a class="link link-primary no-underline"
-               target="_blank"
-               rel="noopener noreferrer"
-               style="color: #ffea00;" href="https://mellifera.network">MELLIFERA</a></h1>
-      </div>
        <div
         v-for="(item, index) of blockchain.computedChainMenu"
         :key="index"
@@ -272,10 +266,6 @@ dayjs()
           target="_blank"
           class="py-2 px-4 flex items-center cursor-pointer rounded-lg hover:bg-gray-100 dark:hover:bg-[#373f59]"
         >
-          <img
-            src="https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75"
-            class="w-6 h-6 rounded-full mr-3"
-          />
           <div
             class="text-sm capitalize flex-1 text-gray-600 dark:text-gray-200"
           >

@@ -3,7 +3,7 @@
   "chain_name": "lava",
   "api": [
     {
-      "address": "https://lava.rest.lava.build:443",
+      "address": "https://lav1.lava.build:443",
       "provider": "MELLIFERA"
     }
   ],

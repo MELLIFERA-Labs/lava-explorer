@@ -38,6 +38,7 @@ import LavaRedelegate from "./messages/LavaRedelegate.vue";
 import LavaRealease from "./messages/LavaRelease.vue";
 import LavaWithdraw from "./messages/LavaWithdraw.vue";
 import LavaDelegate from "./messages/LavaDelegate.vue";
+import CreateProposal from './messages/createProposal.vue';
 
 const props = defineProps({
     type: String,
@@ -90,6 +91,8 @@ const msgType = computed(() => {
           return LavaWithdraw;
         case 'lava_delegate':
           return LavaDelegate;
+        case 'create_proposal':
+          return CreateProposal;
         default:
             return Send;
     }
@@ -127,7 +130,7 @@ async function initData() {
         metadatas.value = {}
         view.value = 'input';
         p.value = JSON.parse(props.params || '{}')
-        memo.value = props.type?.toLowerCase() === 'send' ? '' : 'MELLIFERA and ping.pub'
+        memo.value = props.type?.toLowerCase() === 'send' ? '' : '<my memo here>'
 
         feeAmount.value = Number(p.value?.fees?.amount || 2000)
         feeDenom.value = balance.value[0]?.denom;
@@ -178,6 +181,9 @@ async function initData() {
                 feeDenom.value = res?.params?.bond_denom;
             })
         } catch (err) {
+            console.log('=====================');
+            console.log(err);
+            console.log('=====================');
             error.value = String(err);
         }
 
@@ -259,6 +265,9 @@ async function sendTx() {
         });
     } catch (e) {
         sending.value = false;
+        console.log('111=====================1111');
+        console.log(e);
+        console.log('111=====================111');   
         error.value = String(e);
     }
 }
