@@ -41,6 +41,13 @@ const delegationProviders = ref([] as any);
 const rewardsFromProvider = ref([] as any);
 const userProviders = ref({} as any);
 const availableForRestakeProvider = ref({} as any);
+const autoRestakeEnabled = ref(true);
+
+function toggleAutoRestake() {
+  autoRestakeEnabled.value = !autoRestakeEnabled.value;
+  // Add logic to handle enabling/disabling AutoRestake
+  console.log(`AutoRestake is now ${autoRestakeEnabled.value ? 'enabled' : 'disabled'}`);
+}
 
 onMounted(() => {
   loadAccount(props.address);
@@ -608,9 +615,13 @@ function mapAmount(
             </p>
           </div>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center gap-2">
           <label for="lava_restake" class="btn btn-primary btn-sm" @click="dialog.open('lava_restake', {}, updateEvent)">
             Restake
+          </label>
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" class="toggle toggle-primary" v-model="autoRestakeEnabled" @change="toggleAutoRestake" />
+            <span class="ml-2 text-sm font-semibold">AutoRestake</span>
           </label>
         </div>
       </div>
