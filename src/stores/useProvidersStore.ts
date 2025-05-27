@@ -67,6 +67,10 @@ export const useLavaProvidersStore = defineStore('providersStore', {
       }
       return this.allProviders;
     },
+    async getProvidersApr() {
+      const aprResponse = await this.blockchain.rpc?.getProvidersApr();
+      return aprResponse;
+    },
     // todo: should we remove this?
     async getProviderByAddress(address: string, chainName: string) {
       await this.ensureLatestHeight();

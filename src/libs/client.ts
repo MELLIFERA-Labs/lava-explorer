@@ -390,6 +390,8 @@ export class CosmosRestClient extends BaseRestClient<RequestRegistry> {
   }
   async getProvidersMetadata() {
     return this.request({url: "/lavanet/lava/epochstorage/provider_metadata/", adapter} as Request<{MetaData: any[]}>, { });
+ } 
+ async getProvidersApr() {
+    return fetchData("https://jsinfo.mainnet.lavanet.xyz/all_providers_apr", adapter) as Promise<any[]>;
  }
-
 }
