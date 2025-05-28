@@ -20,6 +20,7 @@ const dialog = useTxDialog();
 const cache = JSON.parse(localStorage.getItem('providers-avatars') || '{}');
 const avatars = ref(cache || {});
 const providersCUs = ref({} as any);
+const showApiInterfaces = ref(false);
 const loadAvatar = (identity: string) => {
   // fetches avatar from keybase and stores it in localStorage
   fetchAvatar(identity).then(() => {
@@ -82,6 +83,7 @@ onMounted(async () => {
   });
 
 });
+
 const fetchAvatar = (identity: string) => {
   // fetch avatar from keybase
   return new Promise<void>((resolve) => {
@@ -133,24 +135,16 @@ watch(activeProviders, (newValue: any) => {
 </script>
 <template>
   <div>
-    <div
-        class="bg-base-100 rounded-lg grid sm:grid-cols-1 md:grid-cols-4 p-4 mb-1"
-    >
+    <div class="bg-base-100 rounded-lg grid sm:grid-cols-1 md:grid-cols-4 p-4 mb-2">
       <span>{{spec?.Spec?.name}} providers ({{spec?.Spec?.index}})</span>
     </div>
     <div>
-      <div
-        class="bg-base-100 rounded-lg grid sm:grid-cols-1 md:grid-cols-4 p-4"
-      >
+      <div class="bg-base-100 rounded-lg grid sm:grid-cols-1 md:grid-cols-4 p-4">
         <div class="flex">
           <span>
-            <div
-              class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2"
-            >
+            <div class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2">
               <Icon class="text-success" icon="mdi:trending-up" size="32" />
-              <div
-                class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-success"
-              ></div>
+              <div class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-success"></div>
             </div>
           </span>
           <span>
@@ -160,17 +154,9 @@ watch(activeProviders, (newValue: any) => {
         </div>
         <div class="flex">
           <span>
-            <div
-              class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2"
-            >
-              <Icon
-                class="text-primary"
-                icon="mdi:lock-open-outline"
-                size="32"
-              />
-              <div
-                class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-primary"
-              ></div>
+            <div class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2">
+              <Icon class="text-primary" icon="mdi:lock-open-outline" size="32" />
+              <div class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-primary"></div>
             </div>
           </span>
           <span>
@@ -180,17 +166,9 @@ watch(activeProviders, (newValue: any) => {
         </div>
         <div class="flex">
           <span>
-            <div
-              class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2"
-            >
-              <Icon
-                class="text-error"
-                icon="mdi:alert-octagon-outline"
-                size="32"
-              />
-              <div
-                class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-error"
-              ></div>
+            <div class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2">
+              <Icon class="text-error" icon="mdi:alert-octagon-outline" size="32" />
+              <div class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-error"></div>
             </div>
           </span>
           <span>
@@ -198,54 +176,92 @@ watch(activeProviders, (newValue: any) => {
             <div class="text-xs">{{frozenProviders.length}}</div>
           </span>
         </div>
+
         <div class="flex">
           <span>
-            <div
-              class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2"
-            >
+            <div class="relative w-9 h-9 rounded overflow-hidden flex items-center justify-center mr-2">
               <Icon class="text-error" icon="mdi:money" size="32" />
-              <div
-                class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-error"
-              ></div>
+              <div class="absolute top-0 left-0 bottom-0 right-0 opacity-20 bg-error"></div>
             </div>
           </span>
           <span>
             <div class="font-bold">Min stake for provider</div>
             <div class="text-xs"> {{
-                format.formatToken(
-                    {
-                      amount: parseInt(spec?.Spec?.min_stake_provider?.amount).toString(),
-                      denom: staking.params.bond_denom,
-                    },
-                    true,
-                    '0,0'
-                )
+              format.formatToken(
+              {
+              amount: parseInt(spec?.Spec?.min_stake_provider?.amount).toString(),
+              denom: staking.params.bond_denom,
+              },
+              true,
+              '0,0'
+              )
               }}</div>
           </span>
         </div>
       </div>
     </div>
+    <div class="bg-base-100 rounded-lg p-4 mt-4">
+      <div 
+        class="flex items-center justify-between rounded p-2 cursor-pointer" 
+        @click="showApiInterfaces = !showApiInterfaces" 
+        :class="{
+          'hover:bg-base-200': !showApiInterfaces,
+        }"
+      >
+        <h3 class="text-lg font-bold">
+          Available API Interfaces & Add-ons
+        </h3>
+        <Icon :icon="showApiInterfaces ? 'mdi:chevron-up' : 'mdi:chevron-down'" class="text-4xl" />
+      </div>
+
+      <div v-show="showApiInterfaces" class="mt-4">
+        <div v-if="spec?.Spec?.api_collections?.length">
+          <div class="overflow-x-auto">
+            <table class="table w-full text-sm">
+              <thead>
+                <tr class="bg-base-200">
+                  <th>Interface</th>
+                  <th>Add-on</th>
+                  <th>Extensions</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(api, index) in spec.Spec.api_collections" :key="index">
+                  <td>{{ api.collection_data.api_interface }}</td>
+                  <td>{{ api.collection_data.add_on || '-' }}</td>
+                  <td>
+                    <ul class="list-disc ml-4">
+                      <li v-for="(ext, extIndex) in api.extensions" :key="extIndex">
+                        {{ ext.name }}
+                        <span v-if="ext.rule?.block"> (rule: block = {{ ext.rule.block }})</span>
+                        <span v-if="ext.cu_multiplier">, CU x{{ ext.cu_multiplier }}</span>
+                      </li>
+                      <li v-if="!api.extensions?.length">N/A</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <span class="badge" :class="api.enabled ? 'badge-success' : 'badge-error'">
+                      {{ api.enabled ? 'Enabled' : 'Disabled' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div v-else>
+          <p class="text-sm text-gray-500">No API collections defined.</p>
+        </div>
+      </div>
+    </div>
+
     <div>
       <div class="flex items-center justify-between py-1">
         <div class="tabs tabs-boxed bg-transparent">
-          <a
-            class="tab text-gray-400"
-            :class="{ 'tab-active': tab === 'active' }"
-            @click="tab = 'active'"
-            >Providers</a
-          >
-          <a
-            class="tab text-gray-400"
-            :class="{ 'tab-active': tab === 'frozen' }"
-            @click="tab = 'frozen'"
-            >Frozen</a
-          >
-          <a
-              class="tab text-gray-400"
-              :class="{ 'tab-active': tab === 'jailed' }"
-              @click="tab = 'jailed'"
-          >Jailed</a
-          >
+          <a class="tab text-gray-400" :class="{ 'tab-active': tab === 'active' }" @click="tab = 'active'">Providers</a>
+          <a class="tab text-gray-400" :class="{ 'tab-active': tab === 'frozen' }" @click="tab = 'frozen'">Frozen</a>
+          <a class="tab text-gray-400" :class="{ 'tab-active': tab === 'jailed' }" @click="tab = 'jailed'">Jailed</a>
         </div>
 
         <div class="text-lg font-semibold">{{ list.length }} providers</div>
@@ -256,11 +272,7 @@ watch(activeProviders, (newValue: any) => {
         <table class="table staking-table w-full">
           <thead class="bg-base-200">
             <tr>
-              <th
-                scope="col"
-                class="uppercase"
-                style="width: 3rem; position: relative"
-              >
+              <th scope="col" class="uppercase" style="width: 3rem; position: relative">
                 {{ $t('staking.rank') }}
               </th>
               <th scope="col" class="uppercase">Provider</th>
@@ -277,67 +289,38 @@ watch(activeProviders, (newValue: any) => {
             </tr>
           </thead>
           <tbody>
-            <tr
-              class="hover:bg-gray-100 dark:hover:bg-[#384059]"
-              v-for="provider in list"
-              :key="provider.address"
-            >
+            <tr class="hover:bg-gray-100 dark:hover:bg-[#384059]" v-for="provider in list" :key="provider.address">
               <!--              rank! -->
               <td>
-                <div
-                  class="text-xs truncate relative px-2 py-1 rounded-full w-fit"
-                  :class="`text-1`"
-                >
-                  <span
-                    class="inset-x-0 inset-y-0 opacity-10 absolute"
-                    :class="`bg-1`"
-                  ></span>
+                <div class="text-xs truncate relative px-2 py-1 rounded-full w-fit" :class="`text-1`">
+                  <span class="inset-x-0 inset-y-0 opacity-10 absolute" :class="`bg-1`"></span>
                   {{ provider.rank }}
                 </div>
               </td>
               <!-- 👉 Validator -->
               <td>
-                <div
-                  class="flex items-center overflow-hidden"
-                  style="max-width: 300px"
-                >
+                <div class="flex items-center overflow-hidden" style="max-width: 300px">
                   <div class="avatar mr-4 relative w-8 h-8 rounded-full">
-                    <div
-                      class="w-8 h-8 rounded-full bg-gray-400 absolute opacity-10"
-                    ></div>
+                    <div class="w-8 h-8 rounded-full bg-gray-400 absolute opacity-10"></div>
                     <div class="w-8 h-8 rounded-full">
-                      <img
-                        v-if="provider.logo"
-                        :src="provider.logo"
-                        class="object-contain"
-                        @error="
+                      <img v-if="provider.logo" :src="provider.logo" class="object-contain" @error="
                           (e) => {
                             const identity = provider.description?.identity;
                             if (identity) loadAvatar(identity);
                           }
-                        "
-                      />
-                      <Icon
-                        v-else
-                        class="text-3xl"
-                        :icon="`mdi-help-circle-outline`"
-                      />
+                        " />
+                      <Icon v-else class="text-3xl" :icon="`mdi-help-circle-outline`" />
                     </div>
                   </div>
 
                   <div class="flex flex-col">
-                    <span
-                      class="text-sm text-primary dark:invert whitespace-nowrap overflow-hidden"
-                    >
-                      <RouterLink
-                        :to="{
+                    <span class="text-sm text-primary dark:invert whitespace-nowrap overflow-hidden">
+                      <RouterLink :to="{
                           name: 'chain-providers-provider',
                           params: {
                             provider: provider.address,
                           },
-                        }"
-                        class="font-weight-medium"
-                      >
+                        }" class="font-weight-medium">
                         {{ provider?.description?.moniker || provider.moniker }}
                       </RouterLink>
                     </span>
@@ -345,7 +328,7 @@ watch(activeProviders, (newValue: any) => {
                       provider.description?.website ||
                       provider.description?.identity ||
                       '-'
-                    }}</span>
+                      }}</span>
                   </div>
                 </div>
               </td>
@@ -354,52 +337,44 @@ watch(activeProviders, (newValue: any) => {
                 <div class="flex flex-col">
                   <h6 class="text-sm font-weight-medium whitespace-nowrap">
                     {{
-                      format.formatToken(
-                        {
-                          amount: parseInt(provider.total_stake).toString(),
-                          denom: staking.params.bond_denom,
-                        },
-                        true,
-                        '0,0'
-                      )
+                    format.formatToken(
+                    {
+                    amount: parseInt(provider.total_stake).toString(),
+                    denom: staking.params.bond_denom,
+                    },
+                    true,
+                    '0,0'
+                    )
                     }}
                   </h6>
                   <span class="text-xs">
                     {{
-                      format.formatToken(
-                        {
-                          amount: parseInt(provider.stake.amount).toString(),
-                          denom: staking.params.bond_denom,
-                        },
-                        true,
-                        '0,0'
-                      )
-                    }}</span
-                  >
+                    format.formatToken(
+                    {
+                    amount: parseInt(provider.stake.amount).toString(),
+                    denom: staking.params.bond_denom,
+                    },
+                    true,
+                    '0,0'
+                    )
+                    }}</span>
                 </div>
               </td>
-            <td class="text-right text-xs">
-             <span v-if="providersCUs[provider.address]">{{ format.formatNumber(providersCUs[provider.address]?.cuInfo?.base_pay?.iprpc_cu, '0,0') }}</span>
-            </td>
+              <td class="text-right text-xs">
+                <span v-if="providersCUs[provider.address]">{{
+                  format.formatNumber(providersCUs[provider.address]?.cuInfo?.base_pay?.iprpc_cu, '0,0') }}</span>
+              </td>
               <!-- 👉 commission -->
               <td class="text-right text-xs">
                 {{ provider.delegate_commission }}%
               </td>
               <!-- 👉 commission -->
               <td class="text-center">
-                <div
-                  v-if="Number(provider.jailed_until) === 0"
-                  class="badge badge-error gap-2 text-white"
-                >
+                <div v-if="Number(provider.jailed_until) === 0" class="badge badge-error gap-2 text-white">
                   {{ $t('staking.jailed') }}
                 </div>
-                <label
-                  v-else
-                  for="lava_restake"
-                  class="btn btn-xs btn-primary rounded-sm capitalize"
-                  @click="dialog.open('lava_restake', { provider_address: provider.address, chain_id: provider.chain })"
-                  >restake</label
-                >
+                <label v-else for="lava_restake" class="btn btn-xs btn-primary rounded-sm capitalize"
+                  @click="dialog.open('lava_restake', { provider_address: provider.address, chain_id: provider.chain })">restake</label>
               </td>
             </tr>
           </tbody>
@@ -413,5 +388,20 @@ watch(activeProviders, (newValue: any) => {
 .staking-table.table :where(th, td) {
   padding: 8px 5px;
   background: transparent;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 8px;
+  text-align: left;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
 }
 </style>
