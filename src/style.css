@@ -136,6 +136,13 @@ html[data-theme='dark'] {
   line-height: 3rem; /* Match line-height to height */
   padding: 0 1rem; /* Adjust padding for horizontal alignment */
   text-align: center; /* Center text horizontally */
+  overflow: hidden;
+  box-sizing: border-box; /* include padding in its width */
+}
+.vs__dropdown-toggle .vs__selected {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .vs__search {

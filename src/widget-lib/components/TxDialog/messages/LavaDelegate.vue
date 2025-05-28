@@ -178,7 +178,7 @@ defineExpose({ msgs, isValid, initial });
       <label class="label">
         <span class="label-text">Select provider</span>
       </label>
-      <v-select v-model="provider" :options="providers" label="label" :reduce="(p:any) => p.provider" />
+      <v-select v-model="provider" :options="providers"  label="label" :reduce="(p:any) => p.provider" append-to-body  />
     </div>
 
     <div class="form-control">
