@@ -328,7 +328,7 @@ loadAvatars();
                         <tr
                             v-for="({v, rank, logo}, i) in list"
                             :key="v.operator_address"
-                            class="hover:bg-gray-100 dark:hover:bg-[#384059]"
+                            class="hover:bg-gray-100 dark:hover:bg-[#0F172A]"
                         >
                             <!-- 👉 rank -->
                             <td>

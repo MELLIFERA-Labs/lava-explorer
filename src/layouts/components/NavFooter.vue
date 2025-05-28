@@ -1,7 +1,7 @@
 <template>
   <!-- footer -->
   <footer
-      class="flex flex-col md:flex-row items-center h-auto md:h-12 mt-5 text-sm bg-gray-100 dark:bg-[#171d30] py-2 z-10 w-full"
+      class="flex flex-col md:flex-row items-center h-auto md:h-12 mt-5 text-sm bg-gray-100 dark:bg-[#0F172A] py-2 z-10 w-full"
   >
     <div class="flex flex-wrap items-center justify-center md:justify-start flex-1 text-center md:text-left">
       &copy;&nbsp;{{ new Date().getFullYear() }}&nbsp;

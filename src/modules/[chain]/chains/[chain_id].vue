@@ -278,7 +278,7 @@ watch(activeProviders, (newValue: any) => {
           </thead>
           <tbody>
             <tr
-              class="hover:bg-gray-100 dark:hover:bg-[#384059]"
+              class="hover:bg-gray-100 dark:hover:bg-[#0F172A]"
               v-for="provider in list"
               :key="provider.address"
             >

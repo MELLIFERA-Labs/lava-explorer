@@ -21,7 +21,7 @@
       <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200 dark:bg-gray-600">
         <div
             :style="{ width: `${progress}%` }"
-            class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
+            class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary"
         ></div>
       </div>
     </div>

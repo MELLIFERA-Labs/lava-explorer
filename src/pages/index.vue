@@ -41,27 +41,9 @@ const chainStore = useBlockchain()
   <div class="">
     <div class="flex md:!flex-row flex-col items-center justify-center mb-6 mt-14 gap-2">
       <div class="w-16 rounded-full">
-        <svg version="1.0" xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 150.000000 132.000000"
-          preserveAspectRatio="xMidYMid meet">
-          <g transform="translate(0.000000,132.000000) scale(0.100000,-0.100000)"
-          :fill="chainStore.current?.themeColor||'#666CFF'" class=" dark:invert" stroke="none">
-            <path d="M500 1310 l-125 -5 -182 -315 c-100 -173 -182 -321 -182 -329 -1 -7
-            81 -159 181 -337 l183 -324 372 0 371 0 186 325 c102 179 186 330 186 337 0 7
-            -82 157 -182 335 l-183 323 -250 -2 c-137 -1 -306 -5 -375 -8z m588 -454 c61
-            -106 112 -197 112 -201 0 -4 -50 -95 -111 -201 l-112 -194 -231 0 -231 0 -105
-            181 c-58 100 -109 190 -114 200 -6 14 17 63 104 213 l112 196 232 0 231 0 113
-            -194z"/>
-            <path d="M591 1001 l-54 -6 -87 -150 -88 -150 176 -3 c97 -1 181 -1 187 2 9 3
-            165 267 183 308 4 9 -233 7 -317 -1z"/>
-            <path d="M872 824 l-90 -159 36 -66 c113 -201 147 -258 153 -251 8 8 179 302
-            179 307 0 2 -37 68 -83 147 -46 78 -88 151 -94 162 -9 16 -24 -5 -101 -140z"/>
-            <path d="M360 625 c0 -7 148 -263 172 -297 l19 -28 186 0 c101 0 183 3 181 8
-            -1 4 -43 78 -93 165 l-90 157 -187 0 c-104 0 -188 -2 -188 -5z"/>
-          </g>
-        </svg>
+        <svg class="w-full h-auto" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" zoomAndPan="magnify" viewBox="0 0 375 374.999991" preserveAspectRatio="xMidYMid meet" version="1.2"><defs><clipPath id="51197a8c0a"><path d="M 9.140625 9.140625 L 365.859375 9.140625 L 365.859375 365.859375 L 9.140625 365.859375 Z M 9.140625 9.140625 "/></clipPath><clipPath id="d3f61bc621"><path d="M 313.574219 61.363281 L 313.636719 61.425781 C 347.074219 94.863281 365.859375 140.214844 365.859375 187.5 C 365.859375 234.785156 347.074219 280.136719 313.636719 313.574219 L 313.574219 313.636719 C 280.136719 347.074219 234.785156 365.859375 187.5 365.859375 C 140.214844 365.859375 94.863281 347.074219 61.425781 313.636719 L 61.363281 313.574219 C 27.925781 280.136719 9.140625 234.785156 9.140625 187.5 C 9.140625 140.214844 27.925781 94.863281 61.363281 61.425781 L 61.425781 61.363281 C 94.863281 27.925781 140.214844 9.140625 187.5 9.140625 C 234.785156 9.140625 280.136719 27.925781 313.574219 61.363281 Z M 313.574219 61.363281 "/></clipPath><clipPath id="c44c0071bd"><path d="M 130.023438 130.023438 L 244.976562 130.023438 L 244.976562 244.976562 L 130.023438 244.976562 Z M 130.023438 130.023438 "/></clipPath><clipPath id="7aa20bc672"><path d="M 187.5 130.023438 C 155.757812 130.023438 130.023438 155.757812 130.023438 187.5 C 130.023438 219.242188 155.757812 244.976562 187.5 244.976562 C 219.242188 244.976562 244.976562 219.242188 244.976562 187.5 C 244.976562 155.757812 219.242188 130.023438 187.5 130.023438 Z M 187.5 130.023438 "/></clipPath></defs><g id="9fc440c70f"><g clip-rule="nonzero" clip-path="url(#51197a8c0a)"><g clip-rule="nonzero" clip-path="url(#d3f61bc621)"><path style=" stroke:none;fill-rule:nonzero;fill:#ffffff;fill-opacity:0;" d="M 9.140625 9.140625 L 365.859375 9.140625 L 365.859375 365.859375 L 9.140625 365.859375 Z M 9.140625 9.140625 "/><path style="fill:none;stroke-width:15.768828;stroke-linecap:butt;stroke-linejoin:miter;stroke:#ff3900;stroke-opacity:1;stroke-miterlimit:4;" d="M 128.014464 21.959245 L 128.040745 21.985526 C 142.101283 36.046064 150.00048 55.11649 150.00048 74.999996 C 150.00048 94.883502 142.101283 113.953928 128.040745 128.014466 L 128.014464 128.040747 C 113.953926 142.101285 94.8835 150.000482 74.999994 150.000482 C 55.116488 150.000482 36.046062 142.101285 21.985525 128.040747 L 21.959243 128.014466 C 7.898705 113.953928 -0.00049176 94.883502 -0.00049176 74.999996 C -0.00049176 55.11649 7.898705 36.046064 21.959243 21.985526 L 21.985525 21.959245 C 36.046062 7.898707 55.116488 -0.000489868 74.999994 -0.000489868 C 94.8835 -0.000489868 113.953926 7.898707 128.014464 21.959245 Z M 128.014464 21.959245 " transform="matrix(2.37811,0,0,2.37811,9.141794,9.14179)"/></g></g><g clip-rule="nonzero" clip-path="url(#c44c0071bd)"><g clip-rule="nonzero" clip-path="url(#7aa20bc672)"><path style=" stroke:none;fill-rule:nonzero;fill:#ff3900;fill-opacity:1;" d="M 130.023438 130.023438 L 244.976562 130.023438 L 244.976562 244.976562 L 130.023438 244.976562 Z M 130.023438 130.023438 "/></g></g></g></svg>
       </div>
-      <h1 class="text-primary dark:invert text-3xl md:!text-6xl font-bold">
+      <h1 class="text-primary text-3xl md:!text-6xl font-bold">
         {{ $t('pages.title') }}
       </h1>
     </div>
@@ -91,7 +73,7 @@ const chainStore = useBlockchain()
       />
     </div>
 
-    <AdBanner id="home-banner-ad" unit="banner" width="970px" height="90px" />
+    <!-- <AdBanner id="home-banner-ad" unit="banner" width="970px" height="90px" /> -->
 
     <div class="text-center text-base mt-6 text-primary">
       <h2 class="mb-6">{{ $t('pages.description') }}</h2>
@@ -117,6 +99,6 @@ const chainStore = useBlockchain()
 
 <style scoped>
  .logo path{
-  fill: #171d30;
+  fill: #0F172A;
 }
 </style>@/components/ad/ad

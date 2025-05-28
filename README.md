@@ -1,15 +1,15 @@
 <div align="center">
 
-<h1>LAVA Ping Dashboard</h1>
+<h1>LavaCenter dashboard</h1>
 
-**Ping Dashboard is not only an explorer but also a wallet and more ... 🛠**
+**LavaCenter Dashboard is not only an explorer but also a wallet and more ... 🛠**
 
 [![GitHub](https://img.shields.io/github/license/ping-pub/explorer.svg)](https://github.com/ping-pub/explorer/blob/master/LICENSE)
 [![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/bukotsunikki.svg?style=social&label=Follow_me)](https://twitter.com/ruslanglaznyov)
 
 </div>
 
-`LAVA Ping Dashboard` is a light explorer for LAVA Blockchains. https://lava-explorer.mellifera.network.
+`LavaCenter Dashboard` is a light explorer for LAVA Blockchains. https://lava-explorer.mellifera.network.
 
 This is a fork of the original [ping.pub](https://github.com/ping-pub/ping.pub) explorer with LAVA features support.
 

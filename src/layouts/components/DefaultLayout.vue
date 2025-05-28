@@ -72,7 +72,7 @@ dayjs()
 </script>
 
 <template>
-  <div class="bg-gray-100 dark:bg-[#171d30]">
+  <div class="bg-gray-100 dark:bg-[#0F172A]">
     <!-- sidebar -->
     <div
       class="w-64 fixed z-50 left-0 top-0 bottom-0 overflow-auto bg-base-100 border-r border-gray-100 dark:border-gray-700"
@@ -80,10 +80,20 @@ dayjs()
     >
       <div class="flex justify-between mt-1 pl-4 py-4 mb-1">
         <RouterLink to="/" class="flex items-center">
-          <img class="w-10 h-10" src="../../assets/logo.svg" />
-          <h1 class="flex-1 ml-3 text-2xl font-semibold dark:text-white">
-            Ping.pub
-          </h1>
+          <img class="w-10 h-10 mr-3" src="../../assets/logo.svg" />
+          <div>
+            <h1 class="text-2xl font-semibold dark:text-primary">
+              LavaCenter
+            </h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              <a class="link link-primary no-underline"
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 style="color: #ffea00;" href="https://mellifera.network">
+                By MELLIFERA
+              </a>
+            </p>
+          </div>
         </RouterLink>
         <div
           class="pr-4 cursor-pointer xl:!hidden"
@@ -93,10 +103,7 @@ dayjs()
         </div>
       </div>
       <div class="flex justify-between mt-1 pl-4 py-4">
-        <h1><a class="link link-primary no-underline"
-               target="_blank"
-               rel="noopener noreferrer"
-               style="color: #ffea00;" href="https://mellifera.network">MELLIFERA</a></h1>
+        <h1></h1>
       </div>
        <div
         v-for="(item, index) of blockchain.computedChainMenu"
@@ -120,7 +127,7 @@ dayjs()
             @click="changeOpen(index)"
           />
           <div
-            class="collapse-title !py-0 px-4 flex items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-[#373f59]"
+            class="collapse-title !py-0 px-4 flex items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-[#1A1A1A]"
           >
             <Icon
               v-if="item?.icon?.icon"
@@ -154,7 +161,7 @@ dayjs()
               <RouterLink
                 v-if="isNavLink(el)"
                 @click="sidebarShow = false"
-                class="hover:bg-gray-100 dark:hover:bg-[#373f59] rounded cursor-pointer px-3 py-2 flex items-center"
+                class="hover:bg-gray-100 dark:hover:bg-[#1A1A1A] rounded cursor-pointer px-3 py-2 flex items-center"
                 :class="{
                   '!bg-primary': selected($route, el),
                 }"
@@ -189,7 +196,7 @@ dayjs()
             </div>
             <div v-if="index === 0 && dashboard.networkType === NetworkType.Testnet" class="menu bg-base-100 w-full !p-0">
               <RouterLink
-              class="hover:bg-gray-100 dark:hover:bg-[#373f59] rounded cursor-pointer px-3 py-2 flex items-center"
+              class="hover:bg-gray-100 dark:hover:bg-[#1A1A1A] rounded cursor-pointer px-3 py-2 flex items-center"
               :to="`/${blockchain.chainName}/faucet`">
                 <Icon
                   icon="mdi:chevron-right"
@@ -338,8 +345,6 @@ dayjs()
 
         <div class="flex-1 w-0"></div>
 
-        <!-- <NavSearchBar />-->
-        <NavBarI18n class="hidden md:!inline-block" />
         <NavbarThemeSwitcher class="!inline-block" />
         <NavbarSearch class="!inline-block" />
         <NavBarWallet />
