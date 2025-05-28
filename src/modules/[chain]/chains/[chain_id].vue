@@ -201,48 +201,54 @@ watch(activeProviders, (newValue: any) => {
       </div>
     </div>
     <div class="bg-base-100 rounded-lg p-4 mt-4">
-      <div class="flex items-center justify-between rounded p-2 cursor-pointer" @click="showApiInterfaces = !showApiInterfaces" :class="{
-        'hover:bg-base-200': !showApiInterfaces,
-      }">
+      <div 
+        class="flex items-center justify-between rounded p-2 cursor-pointer" 
+        @click="showApiInterfaces = !showApiInterfaces" 
+        :class="{
+          'hover:bg-base-200': !showApiInterfaces,
+        }"
+      >
         <h3 class="text-lg font-bold">
           Available API Interfaces & Add-ons
         </h3>
         <Icon :icon="showApiInterfaces ? 'mdi:chevron-up' : 'mdi:chevron-down'" class="text-4xl" />
       </div>
 
-      <div v-show="showApiInterfaces">
+      <div v-show="showApiInterfaces" class="mt-4">
         <div v-if="spec?.Spec?.api_collections?.length">
-          <table class="table w-full text-sm">
-            <thead>
-              <tr class="bg-base-200">
-                <th>Interface</th>
-                <th>Add-on</th>
-                <th>Extensions</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(api, index) in spec.Spec.api_collections" :key="index">
-                <td>{{ api.collection_data.api_interface }}</td>
-                <td>{{ api.collection_data.add_on || '-' }}</td>
-                <td>
-                  <ul class="list-disc ml-4">
-                    <li v-for="(ext, extIndex) in api.extensions" :key="extIndex">
-                      {{ ext.name }}
-                      <span v-if="ext.rule?.block"> (rule: block = {{ ext.rule.block }})</span>
-                      <span v-if="ext.cu_multiplier">, CU x{{ ext.cu_multiplier }}</span>
-                    </li>
-                    <li v-if="!api.extensions?.length">N/A</li>
-                  </ul>
-                </td>
-                <td>
-                  <span class="badge" :class="api.enabled ? 'badge-success' : 'badge-error'">
-                    {{ api.enabled ? 'Enabled' : 'Disabled' }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="overflow-x-auto">
+            <table class="table w-full text-sm">
+              <thead>
+                <tr class="bg-base-200">
+                  <th>Interface</th>
+                  <th>Add-on</th>
+                  <th>Extensions</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(api, index) in spec.Spec.api_collections" :key="index">
+                  <td>{{ api.collection_data.api_interface }}</td>
+                  <td>{{ api.collection_data.add_on || '-' }}</td>
+                  <td>
+                    <ul class="list-disc ml-4">
+                      <li v-for="(ext, extIndex) in api.extensions" :key="extIndex">
+                        {{ ext.name }}
+                        <span v-if="ext.rule?.block"> (rule: block = {{ ext.rule.block }})</span>
+                        <span v-if="ext.cu_multiplier">, CU x{{ ext.cu_multiplier }}</span>
+                      </li>
+                      <li v-if="!api.extensions?.length">N/A</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <span class="badge" :class="api.enabled ? 'badge-success' : 'badge-error'">
+                      {{ api.enabled ? 'Enabled' : 'Disabled' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
         <div v-else>
           <p class="text-sm text-gray-500">No API collections defined.</p>
@@ -382,5 +388,20 @@ watch(activeProviders, (newValue: any) => {
 .staking-table.table :where(th, td) {
   padding: 8px 5px;
   background: transparent;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 8px;
+  text-align: left;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
 }
 </style>
