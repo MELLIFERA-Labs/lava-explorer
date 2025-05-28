@@ -6,10 +6,7 @@ import { computed } from '@vue/reactivity';
 import Popper from 'vue3-popper';
 const props = defineProps(['provider', 'chain', 'chain_id']);
 import {useFormatter, useStakingStore, useTxDialog} from '@/stores';
-import {useLavaSpecStore} from "@/stores/useLavaSpecStore";
 const lavaProvidersStore = useLavaProvidersStore();
-const lavaSpecStore = useLavaSpecStore()
-let spec = ref({} as any);
 
 const format = useFormatter();
 const staking = useStakingStore();
@@ -17,7 +14,7 @@ const dialog = useTxDialog();
 const cache = JSON.parse(localStorage.getItem('providers-avatars') || '{}');
 const providers = ref([] as any);
 const avatars = ref(cache || {});
-const providersCUs = ref({} as any);
+const providersAPR = ref({} as any);
 const loadAvatar = (identity: string) => {
   // fetches avatar from keybase and stores it in localStorage
   fetchAvatar(identity).then(() => {
@@ -26,7 +23,6 @@ const loadAvatar = (identity: string) => {
 };
 
 const loadAvatars = () => {
-  // fetches all avatars from keybase and stores it in localStorage
   const promises = providers.value.map((provider: any) => {
     const identity = provider.description?.identity;
 
@@ -48,27 +44,13 @@ onMounted(async () => {
   lavaProvidersStore.getProvidersMetadata().then((p) => {
     providers.value = p;
     return p;
-  }).then((ps) => {
-    console.log(ps);
-    // ps.forEach((p: any) => {
-    //   providersCUs.value[p.address] = {
-    //     loading: true,
-    //     cuInfo: 0,
-    //   };
-    //   lavaProvidersStore.providerCus(chainId, p.address)
-    //     .then((d) => {
-    //       providersCUs.value[p.address] = {
-    //         loading: false,
-    //         cuInfo: d,
-    //       };
-    //     })
-    //     .catch(() => {
-    //       providersCUs.value[p.address] = {
-    //         loading: false,
-    //         cuInfo: 0,
-    //       };
-    //     });
-    // });
+  }).then(async (ps) => {
+    const providerApr = await lavaProvidersStore.getProvidersApr();
+    console.log('ps', ps);
+    ps.forEach((provider: any) => {
+      providersAPR.value[provider.provider] = providerApr.find((p: any) => p.address === provider.provider)?.apr;
+    });
+    console.log('apr', providerApr);
   });
 });
 const fetchAvatar = (identity: string) => {
@@ -107,8 +89,11 @@ const list = computed(() => {
       return x;
     });
 });
-
-loadAvatars();
+watch(providers, (newVal) => {
+  if(newVal) {
+   loadAvatars(); 
+  }
+});
 </script>
 <template>
   <div>
@@ -142,8 +127,12 @@ loadAvatars();
               </th>
               <th scope="col" class="text-right uppercase">Services</th>
               <th scope="col" class="text-right uppercase">
+                Est. APR
+              </th>
+              <th scope="col" class="text-right uppercase">
                 {{ $t('staking.commission') }}
               </th>
+              
               <th scope="col" class="text-center uppercase">
                 {{ $t('staking.actions') }}
               </th>
@@ -261,9 +250,12 @@ loadAvatars();
               </td>
               <!-- 👉 commission -->
               <td class="text-right text-xs">
-                {{ provider.delegate_commission }}%
+                  {{ providersAPR[provider.provider] || 'N/A' }}
               </td>
               <!-- 👉 commission -->
+              <td class="text-right text-xs">
+                {{ provider.delegate_commission }}%
+              </td>
               <td class="text-center">
                 <div
                   v-if="Number(provider.jailed_until) === 0"
@@ -318,4 +310,3 @@ loadAvatars();
       }
     }
 </route>
-  
