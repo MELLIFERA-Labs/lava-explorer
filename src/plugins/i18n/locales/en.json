@@ -15,7 +15,7 @@
     "consensus": "Consensus",
     "providers": "Providers",
     "chains": "Chains",
-    "rewards_calculator": "Rewards Calculator",
+    "iprpc": "IPRPC pools",
     "supply": "Supply",
     "account": "Accounts",
     "ecosystem": "Ecosystem",
