@@ -1,16 +1,12 @@
 import { ref, onMounted, onUnmounted, computed, type Ref } from 'vue';
 
 interface CountdownOptions {
-  targetDate?: Date;
-  initialSeconds?: Ref<number>;
+  initialSeconds: Ref<number>;
 }
 
-export function useCountdown(options: CountdownOptions = {}) {
-  const remainingTime = ref(
-    options.targetDate 
-      ? Math.max(0, Math.floor((options.targetDate.getTime() - Date.now()) / 1000))
-      : options.initialSeconds || 0
-  );
+export function useCountdown(options: CountdownOptions) {
+  const remainingTime = ref(options.initialSeconds);
+
 
   const days = computed(() => Math.floor(remainingTime.value / (24 * 3600)));
   const hours = computed(() => Math.floor((remainingTime.value % (24 * 3600)) / 3600));
