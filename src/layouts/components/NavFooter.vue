@@ -5,14 +5,14 @@
   >
     <div class="flex flex-wrap items-center justify-center md:justify-start flex-1 text-center md:text-left">
       &copy;&nbsp;{{ new Date().getFullYear() }}&nbsp;
-      Made With&nbsp;<img src="../../assets/images/heart.svg" class="inline-block w-4 h-4" />&nbsp;
-      By&nbsp;<a
+      <span class="flex items-center">Made with&nbsp;<img src="../../assets/images/heart.svg" class="w-4 h-4 mx-1" />&nbsp;by</span>&nbsp;<a
         class="link link-primary no-underline"
+        style="color: #666dff;"
         href="https://ping.pub"
         target="_blank"
         rel="noopener noreferrer"
     >Ping.pub</a>
-      &nbsp; modified for LAVA by <a
+      &nbsp;modified for LAVA by <a
         class="link link-primary no-underline"
         href="https://mellifera.network"
         target="_blank"
