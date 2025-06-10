@@ -82,7 +82,7 @@ dayjs()
         <RouterLink to="/" class="flex items-center">
           <img class="w-10 h-10 mr-3" src="../../assets/logo.svg" />
           <div>
-            <h1 class="text-2xl font-semibold dark:text-primary">
+            <h1 class="text-2xl font-semibold text-primary">
               LavaCenter
             </h1>
             <p class="text-xs text-gray-500 dark:text-gray-400">

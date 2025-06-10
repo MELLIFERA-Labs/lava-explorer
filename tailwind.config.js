@@ -1,3 +1,5 @@
+const { link } = require('fs')
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class'],
@@ -5,10 +7,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#FF3900',     // Lava Red
+        primary: '#cd4546',     // Lava Red
+        interective: '#ac4c39', // Lava Red
         secondary: '#0F172A',   // Deep Navy
         accent: '#FFD700',      // Bright Yellow
         info: '#FFD700',        // Using same as accent for highlight
+        graylight: '#0C121A',
         main: 'var(--text-main)',
         secondaryText: 'var(--text-secondary)', // renamed to avoid collision
         active: 'var(--bg-active)',

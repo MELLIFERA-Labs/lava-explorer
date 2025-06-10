@@ -106,7 +106,7 @@ html[data-theme='dark'] {
     --vs-selected-border-width: var(--vs-border-width);
 
     /* Dropdown */
-    --vs-dropdown-bg: #0A0A0A;
+    --vs-dropdown-bg: #0C121A;
     --vs-dropdown-color: #f0f0f0;;
     --vs-dropdown-z-index: 1000;
     --vs-dropdown-min-width: 160px;

@@ -319,7 +319,7 @@ watch(activeProviders, (newValue: any) => {
 
                   <div class="flex flex-col">
                     <!-- dark:invert -->
-                    <span class="text-sm text-primary whitespace-nowrap overflow-hidden">
+                    <span class="text-sm whitespace-nowrap overflow-hidden">
                       <RouterLink :to="{
                           name: 'chain-providers-provider',
                           params: {
