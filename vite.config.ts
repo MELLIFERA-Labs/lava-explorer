@@ -11,6 +11,7 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 import inject from '@rollup/plugin-inject';
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/',
   define: {
     'process.env': {}
   },
