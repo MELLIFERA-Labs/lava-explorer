@@ -12,7 +12,7 @@
         rel="noopener noreferrer"
         style="color: #ffea00;"
     >MELLIFERA</a>
-      &nbsp;and forked from <a
+      &nbsp;and forked from &nbsp;<a
         class="link link-primary no-underline"
         style="color: #666dff;"
         href="https://ping.pub"
