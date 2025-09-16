@@ -289,7 +289,11 @@ watch(activeProviders, (newValue: any) => {
             </tr>
           </thead>
           <tbody>
-            <tr class="hover:bg-gray-100 dark:hover:bg-[#384059]" v-for="provider in list" :key="provider.address">
+            <tr
+              class="hover:bg-gray-100 dark:hover:bg-[#0F172A]"
+              v-for="provider in list"
+              :key="provider.address"
+            >
               <!--              rank! -->
               <td>
                 <div class="text-xs truncate relative px-2 py-1 rounded-full w-fit" :class="`text-1`">
@@ -314,7 +318,8 @@ watch(activeProviders, (newValue: any) => {
                   </div>
 
                   <div class="flex flex-col">
-                    <span class="text-sm text-primary dark:invert whitespace-nowrap overflow-hidden">
+                    <!-- dark:invert -->
+                    <span class="text-sm text-primary whitespace-nowrap overflow-hidden">
                       <RouterLink :to="{
                           name: 'chain-providers-provider',
                           params: {

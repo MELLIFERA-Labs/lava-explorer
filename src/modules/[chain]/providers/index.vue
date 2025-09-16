@@ -140,7 +140,7 @@ watch(providers, (newVal) => {
           </thead>
           <tbody>
             <tr
-              class="hover:bg-gray-100 dark:hover:bg-[#384059]"
+              class="hover:bg-gray-100 dark:hover:bg-[#0F172A]"
               v-for="provider in list"
               :key="provider.provider"
             >
@@ -188,8 +188,9 @@ watch(providers, (newVal) => {
                   </div>
 
                   <div class="flex flex-col">
+                    <!-- dark:invert -->
                     <span
-                      class="text-sm text-primary dark:invert whitespace-nowrap overflow-hidden"
+                      class="text-sm text-primary  whitespace-nowrap overflow-hidden"
                     >
                       <RouterLink
                         :to="{

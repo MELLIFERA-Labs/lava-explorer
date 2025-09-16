@@ -17,6 +17,7 @@ export const useLavaSpecStore = defineStore('specStore', {
             specs: [] as any[],
             enabledSpecs: [] as any[],
             supportedChains: [] as any[],
+            iprpcPoolsRewards: [] as any[],
         }
     },
     getters: {
@@ -52,6 +53,29 @@ export const useLavaSpecStore = defineStore('specStore', {
         },
         async getLavaSpecByChainID(chainID: string) {
             return await this.blockchain.rpc?.getLavaSpecByChainID(chainID);
-        }
+        },
+        async getLavaIPRPCRewardsPools() {
+            const pools = await this.blockchain.rpc?.getLavaIPRPCRewardsPools();
+            const supportedChains = await this.blockchain.rpc?.getLavaSupportedChains();
+            const poolsWithChainName = pools.iprpc_rewards.at(0).spec_funds.map((pool: any) => {
+                const chain = supportedChains.chainInfoList.find((chain: any) => chain.chainID === pool.spec);
+                if (chain) {
+                    pool.chainName = chain.chainName;
+                }else {
+                    pool.chainName = null;
+                }
+                return pool;
+            });        
+            this.iprpcPoolsRewards = poolsWithChainName;
+            if (this.iprpcPoolsRewards.length) {
+                return this.iprpcPoolsRewards;
+            }
+
+            return poolsWithChainName;
+        },
+        async getLavaPools() {
+            const pools = await this.blockchain.rpc?.getLavaPools();
+            return pools;
+        } 
     }
 });

@@ -24,7 +24,7 @@ const addFavor = (e: Event) => {
 <template>
   <RouterLink
       :to="`chains/${spec.chainID}`"
-      class="bg-base-10 0 hover:bg-gray-100 dark:hover:bg-[#373f59] rounded shadow flex items-center px-3 py-3 cursor-pointer"
+      class="bg-base-10 0 hover:bg-gray-100 dark:hover:bg-[#1A1A1A] rounded shadow flex items-center px-3 py-3 cursor-pointer"
   >
     <div class="w-8 h-8  rounded-full overflow-hidden">
       <img :src="spec?.meta?.logo" />

@@ -36,9 +36,9 @@ body {
 
 html.dark,
 html[data-theme='dark'] {
-  --text-main: #f7f7f7;
-  --text-secondary: #6f6e84;
-  --bg-active: #242b40;
+  --text-main: #ffffff;         /* Pure white for max contrast */
+  --text-secondary: #b3b3b3;    /* Neutral light gray with warmth */
+  --bg-active: #1A1A1A;         /* Lava-style dark panel/active color */
 }
 
 .table th:first-child {
@@ -99,14 +99,14 @@ html[data-theme='dark'] {
     --vs-controls--deselect-text-shadow: 0 1px 0 #fff;
 
     /* Selected */
-    --vs-selected-bg: #2a334b;
+    --vs-selected-bg: #0A0A0A;
     --vs-selected-color: #f0f0f0;
     --vs-selected-border-color: var(--vs-border-color);
     --vs-selected-border-style: var(--vs-border-style);
     --vs-selected-border-width: var(--vs-border-width);
 
     /* Dropdown */
-    --vs-dropdown-bg: #2a334b;
+    --vs-dropdown-bg: #0C121A;
     --vs-dropdown-color: #f0f0f0;;
     --vs-dropdown-z-index: 1000;
     --vs-dropdown-min-width: 160px;
@@ -136,6 +136,13 @@ html[data-theme='dark'] {
   line-height: 3rem; /* Match line-height to height */
   padding: 0 1rem; /* Adjust padding for horizontal alignment */
   text-align: center; /* Center text horizontally */
+  overflow: hidden;
+  box-sizing: border-box; /* include padding in its width */
+}
+.vs__dropdown-toggle .vs__selected {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .vs__search {

@@ -7,15 +7,7 @@ const i18nLangs: Array<{ label: string; i18nLang: string }> = [
     {
         label: 'English',
         i18nLang: 'en',
-    },
-    {
-        label: '中文',
-        i18nLang: 'cn',
-    },
-    {
-        label: 'Indonesian',
-        i18nLang: 'id',
-    },
+    }
 ];
 
 let locale = ref(useI18n({ useScope: 'global' }).locale);
@@ -23,17 +15,8 @@ watch(locale, (val) => {
     document.documentElement.setAttribute('lang', val as string);
 });
 
-let currentLang = ref(localStorage.getItem('lang') || 'en');
+let currentLang = 'en';
 
-watch(currentLang, (val: string) => {
-    document.documentElement.setAttribute('lang', val as string);
-});
-
-const handleLangChange = (lang: string) => {
-    locale.value = lang;
-    currentLang.value = lang;
-    localStorage.setItem('lang', lang);
-};
 </script>
 
 <template>
@@ -59,7 +42,6 @@ const handleLangChange = (lang: string) => {
                 <a
                     class="hover:bg-gray-100 dark:hover:bg-[#373f59]"
                     :class="{ 'text-primary': currentLang === lang.i18nLang }"
-                    @click="handleLangChange(lang.i18nLang)"
                     >{{ lang.label }}</a
                 >
             </li>
