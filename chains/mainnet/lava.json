@@ -60,10 +60,10 @@
 
   "addr_prefix": "lava@",
   "theme_color": "#ce4747",
-  "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75",
+  "logo": "https://docs.lavanet.xyz/img/lava_logo.svg",
   "lava_specs_meta": {
     "LAVA": {
-      "logo": "https://services.mellifera.network/_next/image?url=/lava.png&w=64&q=75"
+      "logo": "https://docs.lavanet.xyz/img/lava_logo.svg"
     },
     "COSMOSHUB": {
         "logo": "https://ping.pub/logos/cosmos.svg"
