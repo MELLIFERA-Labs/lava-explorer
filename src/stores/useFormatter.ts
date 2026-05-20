@@ -79,7 +79,7 @@ export const useFormatter = defineStore('formatter', {
       try {
         asset = await get(`https://metadata.ping.pub/metadata/${denom}`) as Asset
       } catch (e) {
-        const assetFromConfig = this.blockchain.current?.lava_iprpc_assets?.find((x) => x?.ibc_trace && x.ibc_trace.trim() === denom.trim())
+        const assetFromConfig = this.blockchain.current?.lava_iprpc_assets?.find((x) => x?.ibc_trace && x?.ibc_trace.trim() === denom.trim())
         if(assetFromConfig) {
           asset = assetFromConfig
         }
